@@ -1,0 +1,64 @@
+{
+  "name": "@deepseek-ai/dsh-desktop",
+  "description": "独立的中文编码代理桌面工作台",
+  "version": "0.1.0-rc.5",
+  "private": true,
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "dev": "electron .",
+    "test": "node --test test/*.test.mjs",
+    "package": "electron-builder --win portable nsis"
+  },
+  "devDependencies": {
+    "electron": "43.4.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "ai.deepseek.dsh",
+    "productName": "深寻工作台",
+    "asar": true,
+    "directories": {
+      "output": "../../dist/desktop/artifacts"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../../dist/desktop/package/runtime",
+        "to": "runtime",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../../dist/desktop/package/runtime/node_modules",
+        "to": "runtime/node_modules",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "artifactName": "ShenXun-Workbench-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "ShenXun-Workbench-${version}-${arch}-portable.${ext}"
+    },
+    "nsis": {
+      "artifactName": "ShenXun-Workbench-${version}-${arch}-setup.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "深寻工作台",
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true
+    }
+  }
+}

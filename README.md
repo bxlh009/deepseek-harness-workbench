@@ -1,0 +1,97 @@
+# ShenXun Workbench
+
+English | [中文](README.zh.md)
+
+ShenXun Workbench (`dsh`) is a local-first desktop coding agent for Chinese developers. It brings projects, conversations, planning, tool execution, and approvals into one workspace so users can delegate real software tasks through a Codex-like workflow.
+
+## Upstream and project relationship
+
+ShenXun Workbench is an independent derivative of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), the open-source agent harness published by DeepSeek. DeepSeek Harness supplies the core runtime, sessions, tools, and plugin architecture; this project adds an independent desktop product layer, Chinese user experience, provider configuration, task workflow, review surfaces, and local distribution.
+
+ShenXun Workbench is not an official DeepSeek product and does not represent DeepSeek. The project preserves the upstream MIT license, copyright notices, third-party notices, and a clear record of downstream modifications. It does not claim the DeepSeek Harness implementation as original work.
+
+The current product core includes:
+
+- Project workspaces connected to real local code directories, sessions, and history.
+- Coding conversations that use DeepSeek models to inspect code, edit files, and run commands.
+- Plan mode for reviewing an execution plan before mutating work begins.
+- Explicit approvals and permissions for risky actions.
+
+It uses an architecture where **everything is a plugin**, and is powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper).
+
+## Developer preview
+
+ShenXun Workbench is currently in _developer preview_ and is iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+
+### Capability status
+
+| Area | Current status |
+| --- | --- |
+| Harness coding runtime, sessions, tools, planning, and approvals | Implemented by the upstream DeepSeek Harness foundation |
+| Windows Electron shell and bundled local runtime | Implemented and locally packaged |
+| Chinese desktop branding and core interface localization | Implemented locally |
+| Theme skins and custom image skin | Implemented with related component tests |
+| Pull requests, Sites, scheduled tasks, and a complete plugin manager | Not implemented as product workflows; placeholders are not capabilities |
+| Code signing, automatic updates, public stable releases, and production acceptance | Not completed |
+
+## Run
+
+### Run as a Windows desktop application
+
+The desktop application is the recommended entry point. It bundles the Node Host and Web UI, so installed users do not need to install Node.js or pnpm separately:
+
+```powershell
+pnpm.cmd run desktop:dev
+```
+
+Build the Windows portable executable and installer with:
+
+```powershell
+pnpm.cmd run desktop:dist
+```
+
+Artifacts are written to `dist/desktop/artifacts/` as `ShenXun-Workbench-*-portable.exe` and the corresponding installer. Current builds are unsigned and have no automatic update channel.
+
+### Run from `npm`
+
+Install `Node.js`, then run:
+
+```sh
+npx @deepseek-ai/dsh web
+```
+
+The command starts the Web UI, served at `http://127.0.0.1:3080` by default. See [Web UI guide](docs/user/guide/index.md).
+
+### Run from source
+
+To run from a repository checkout:
+
+```sh
+git clone https://github.com/bxlh009/shenxun-workbench.git
+cd shenxun-workbench
+pnpm install
+pnpm run build
+pnpm dsh web
+```
+
+## Support and upstream
+
+- Report ShenXun Workbench product problems in this project's GitHub repository after it is published.
+- Report reproducible upstream runtime defects to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) only after confirming they are not caused by downstream changes.
+- See the upstream repository for the original DeepSeek Harness documentation and community channels.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Development
+
+Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
+
+For agents, follow [AGENTS.md](AGENTS.md).
+
+## License
+
+[MIT](LICENSE)
+
+Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

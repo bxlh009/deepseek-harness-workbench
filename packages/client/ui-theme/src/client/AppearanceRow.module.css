@@ -1,0 +1,208 @@
+/* Appearance row (figma 'Frame 2117131228': title + cube row, column gap 8,
+ * pad 16/0, hairline separator; the section column strips it when last). */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.cubeRow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Appearance cube (figma '.Selector Cube' 276x82 r16, pad 20/32, centered
+ * icon-over-label column, gap 4); flexed down from the figma width so all
+ * three sit on one row in the 800 panel, wrapping when narrower. */
+.themeCube {
+  box-sizing: border-box;
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px 32px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 16px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+.themeCube:hover:not(.selected) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.themeCube:focus-visible,
+.skinCard:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+
+/* Selected cube: #F5F6F7 fill + #ADB2B8 border (static token — the bluish-400
+ * step has no alias-layer name). */
+.selected {
+  background: var(--dsw-alias-bg-module-platform);
+  border-color: var(--dsw-static-neutral-bluish-400);
+}
+
+.skinTitle {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.skinRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.skinCard {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 74px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+.skinCard:hover:not(.selected) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.skinCard.selected {
+  border-color: var(--dsw-alias-state-business-primary);
+  box-shadow: 0 0 0 2px var(--dsw-alias-state-business-tertiary);
+}
+
+.skinSwatch {
+  width: 36px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--appearance-skin-preview);
+}
+
+.skinImageSwatch {
+  width: 44px;
+  height: 28px;
+  border-radius: 8px;
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(0, 0, 0, 0.2)), var(--appearance-skin-image);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.uploadCard {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 74px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px;
+  border: 1px dashed var(--dsw-alias-border-l3);
+  border-radius: 12px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+.uploadCard:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-active);
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.uploadCard:focus-visible,
+.removeButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+
+.uploadCard:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.uploadIcon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--dsw-alias-interactive-bg-active);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--dsw-alias-brand-primary);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.skinActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 22px;
+}
+
+.removeButton {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.removeButton:hover {
+  color: var(--dsw-alias-brand-text);
+}
+
+.error {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-state-error-primary);
+}

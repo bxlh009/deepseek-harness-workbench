@@ -1,0 +1,531 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sidebar shell snapshots > renders the collapsed rail after the crossfade settles, in place 1`] = `
+<div
+  data-slot="sidebar"
+  style="display: contents;"
+>
+  <div
+    class="root collapsed railIn quietBars"
+    data-image-skin-sidebar=""
+    style=""
+  >
+    <div
+      class="logoRow"
+    >
+      <button
+        aria-label="Open sidebar"
+        class="iconButton toggle"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="railFish"
+          data-content="965fe321"
+          fill="none"
+          height="17.6580310880829"
+          viewBox="0 0 23.16 17.04"
+          width="24"
+        />
+        <svg
+          class="panelIcon"
+          data-content="35f95b0c"
+          fill="none"
+          height="18"
+          viewBox="0 0 16 16"
+          width="18"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+      </button>
+    </div>
+    <button
+      aria-label="New session"
+      class="newSession"
+      type="button"
+    >
+      <svg
+        data-content="c0ce4dcc"
+        fill="none"
+        height="18"
+        viewBox="0 0 16 16"
+        width="18"
+        xmlns="http://www.w3.org/2000/svg"
+      />
+    </button>
+    <div
+      class="regionArea"
+    >
+      <div
+        data-slot="sidebar.workspaces"
+        style="display: contents;"
+      />
+    </div>
+    <div
+      class="footArea"
+    >
+      <div
+        class="footerActions"
+      >
+        <div
+          data-slot="sidebar.footer.action"
+          style="display: contents;"
+        />
+      </div>
+      <div
+        class="settingsArea"
+      >
+        <div
+          data-slot="sidebar.settings"
+          style="display: contents;"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsule, empty holes) 1`] = `
+<div
+  data-slot="sidebar"
+  style="display: contents;"
+>
+  <div
+    class="root quietBars"
+    data-image-skin-sidebar=""
+    style="width: 300px;"
+  >
+    <div
+      class="logoRow"
+    >
+      <button
+        aria-label="New session"
+        class="brand wide"
+        type="button"
+      >
+        <span
+          class="brandIdentity"
+        >
+          <svg
+            aria-hidden="true"
+            class="brandFish"
+            data-content="965fe321"
+            fill="none"
+            height="17.6580310880829"
+            viewBox="0 0 23.16 17.04"
+            width="24"
+          />
+          <span
+            class="brandCopy"
+          >
+            <span
+              class="brandName"
+            >
+              ShenXun Workbench
+            </span>
+            <span
+              class="brandTagline"
+            >
+              Chinese coding agent
+            </span>
+          </span>
+        </span>
+      </button>
+      <button
+        aria-label="Collapse sidebar"
+        class="iconButton toggle"
+        type="button"
+      >
+        <svg
+          class="panelIcon"
+          data-content="35f95b0c"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+      </button>
+    </div>
+    <button
+      aria-label="New session"
+      class="newSession"
+      type="button"
+    >
+      <svg
+        data-content="c0ce4dcc"
+        fill="none"
+        height="14"
+        viewBox="0 0 16 16"
+        width="14"
+        xmlns="http://www.w3.org/2000/svg"
+      />
+      <span
+        class="newSessionLabel wide"
+      >
+        New Session
+      </span>
+    </button>
+    <nav
+      aria-label="Workbench navigation"
+      class="primaryNav"
+    >
+      <div
+        aria-current="page"
+        class="navItem navItemActive"
+      >
+        <svg
+          class="navIcon"
+          data-content="ae283ba4"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          Coding tasks
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="Planned"
+      >
+        <svg
+          class="navIcon"
+          data-content="ae283ba4"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          Pull requests
+        </span>
+        <span
+          class="navBadge"
+        >
+          Planned
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="Planned"
+      >
+        <svg
+          class="navIcon"
+          data-content="f23fa4b8"
+          fill="none"
+          height="16"
+          viewBox="0 0 14 14"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          Sites
+        </span>
+        <span
+          class="navBadge"
+        >
+          Planned
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="Planned"
+      >
+        <svg
+          class="navIcon"
+          data-content="f869e73c"
+          fill="none"
+          height="16"
+          viewBox="0 0 14 14"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          Scheduled
+        </span>
+        <span
+          class="navBadge"
+        >
+          Planned
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="Planned"
+      >
+        <svg
+          class="navIcon"
+          data-content="150a89e2"
+          fill="none"
+          height="16"
+          viewBox="0 0 14 14"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          Plugins
+        </span>
+        <span
+          class="navBadge"
+        >
+          Planned
+        </span>
+      </div>
+    </nav>
+    <div
+      class="regionArea"
+    >
+      <div
+        data-slot="sidebar.workspaces"
+        style="display: contents;"
+      />
+    </div>
+    <div
+      class="footArea"
+    >
+      <div
+        class="footerActions"
+      >
+        <div
+          data-slot="sidebar.footer.action"
+          style="display: contents;"
+        />
+      </div>
+      <div
+        class="settingsArea"
+      >
+        <div
+          data-slot="sidebar.settings"
+          style="display: contents;"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`sidebar shell snapshots > renders the expanded column in the default locale (zh, no setLocale) 1`] = `
+<div
+  data-slot="sidebar"
+  style="display: contents;"
+>
+  <div
+    class="root quietBars"
+    data-image-skin-sidebar=""
+    style="width: 300px;"
+  >
+    <div
+      class="logoRow"
+    >
+      <button
+        aria-label="新建会话"
+        class="brand wide"
+        type="button"
+      >
+        <span
+          class="brandIdentity"
+        >
+          <svg
+            aria-hidden="true"
+            class="brandFish"
+            data-content="965fe321"
+            fill="none"
+            height="17.6580310880829"
+            viewBox="0 0 23.16 17.04"
+            width="24"
+          />
+          <span
+            class="brandCopy"
+          >
+            <span
+              class="brandName"
+            >
+              深寻工作台
+            </span>
+            <span
+              class="brandTagline"
+            >
+              中文编码代理
+            </span>
+          </span>
+        </span>
+      </button>
+      <button
+        aria-label="收起侧边栏"
+        class="iconButton toggle"
+        type="button"
+      >
+        <svg
+          class="panelIcon"
+          data-content="35f95b0c"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+      </button>
+    </div>
+    <button
+      aria-label="新建会话"
+      class="newSession"
+      type="button"
+    >
+      <svg
+        data-content="c0ce4dcc"
+        fill="none"
+        height="14"
+        viewBox="0 0 16 16"
+        width="14"
+        xmlns="http://www.w3.org/2000/svg"
+      />
+      <span
+        class="newSessionLabel wide"
+      >
+        新会话
+      </span>
+    </button>
+    <nav
+      aria-label="工作台导航"
+      class="primaryNav"
+    >
+      <div
+        aria-current="page"
+        class="navItem navItemActive"
+      >
+        <svg
+          class="navIcon"
+          data-content="ae283ba4"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          编码任务
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="规划中"
+      >
+        <svg
+          class="navIcon"
+          data-content="ae283ba4"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          拉取请求
+        </span>
+        <span
+          class="navBadge"
+        >
+          规划中
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="规划中"
+      >
+        <svg
+          class="navIcon"
+          data-content="f23fa4b8"
+          fill="none"
+          height="16"
+          viewBox="0 0 14 14"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          站点
+        </span>
+        <span
+          class="navBadge"
+        >
+          规划中
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="规划中"
+      >
+        <svg
+          class="navIcon"
+          data-content="f869e73c"
+          fill="none"
+          height="16"
+          viewBox="0 0 14 14"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          已安排
+        </span>
+        <span
+          class="navBadge"
+        >
+          规划中
+        </span>
+      </div>
+      <div
+        class="navItem navItemPlanned"
+        title="规划中"
+      >
+        <svg
+          class="navIcon"
+          data-content="150a89e2"
+          fill="none"
+          height="16"
+          viewBox="0 0 14 14"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+        <span>
+          插件
+        </span>
+        <span
+          class="navBadge"
+        >
+          规划中
+        </span>
+      </div>
+    </nav>
+    <div
+      class="regionArea"
+    >
+      <div
+        data-slot="sidebar.workspaces"
+        style="display: contents;"
+      />
+    </div>
+    <div
+      class="footArea"
+    >
+      <div
+        class="footerActions"
+      >
+        <div
+          data-slot="sidebar.footer.action"
+          style="display: contents;"
+        />
+      </div>
+      <div
+        class="settingsArea"
+      >
+        <div
+          data-slot="sidebar.settings"
+          style="display: contents;"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;

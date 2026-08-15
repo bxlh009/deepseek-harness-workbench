@@ -1,0 +1,38 @@
+{
+  "name": "deepseek-harness",
+  "version": "0.1.0",
+  "description": "Connect Codex to a local DeepSeek Harness runtime with an approval-gated planning workflow.",
+  "author": {
+    "name": "DeepSeek Harness contributors",
+    "url": "https://github.com/deepseek-ai/deepseek-harness"
+  },
+  "homepage": "https://github.com/deepseek-ai/deepseek-harness",
+  "repository": "https://github.com/deepseek-ai/deepseek-harness",
+  "license": "MIT",
+  "keywords": [
+    "deepseek",
+    "agent",
+    "coding",
+    "plan-mode",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "DeepSeek Harness",
+    "shortDescription": "Run DeepSeek Harness from Codex.",
+    "longDescription": "Use a local DeepSeek Harness runtime from Codex through MCP, with an explicit plan-and-approve workflow before execution.",
+    "developerName": "DeepSeek Harness contributors",
+    "category": "Development",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Plan"
+    ],
+    "defaultPrompt": [
+      "Check the DeepSeek Harness runtime status.",
+      "Create a plan for this coding task before execution.",
+      "Run the approved task through DeepSeek Harness."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}
