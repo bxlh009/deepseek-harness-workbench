@@ -155,6 +155,32 @@ class BrokenCatalogAdapter extends CatalogAdapter {
   }
 }
 
+class ArenaAdapter extends CatalogAdapter {
+  readonly calls: GenerateOptions[] = []
+
+  override async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
+    this.calls.push(options)
+    yield { type: 'block-start', index: 0, blockType: 'text' }
+    yield { type: 'text-delta', index: 0, text: `${options.provider}/${options.model}` }
+    yield { type: 'block-end', index: 0, block: { type: 'text', text: `${options.provider}/${options.model}` } }
+    yield { type: 'usage', usage: { inputTokens: 7, outputTokens: 3 } }
+    yield { type: 'finish', reason: { kind: 'stop' } }
+  }
+}
+
+class SlowArenaAdapter extends ArenaAdapter {
+  override async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, 100)
+      options.signal?.addEventListener('abort', () => {
+        clearTimeout(timer)
+        reject(options.signal?.reason)
+      }, { once: true })
+    })
+    yield* super.stream(options)
+  }
+}
+
 const NS = settingsNamespace('llm-deepseek')
 
 const AdapterConfig = z.object({
@@ -619,6 +645,46 @@ describe('credentials domain', () => {
 })
 
 describe('llm domain', () => {
+  it('runs blind arena routes concurrently without tools or session history', async () => {
+    const ctx = await harness()
+    const first = new ArenaAdapter('First', ['a'])
+    const second = new ArenaAdapter('Second', ['b'])
+    ctx.llm.registerAdapter(['p1'], first)
+    ctx.llm.registerAdapter(['p2'], second)
+    const api = createApiProxy(ctx, DEFAULTS)
+
+    const value = expectOk(await api.llm.arena(request({
+      prompt: 'checkable question',
+      routes: [{ provider: 'p1', model: 'a' }, { provider: 'p2', model: 'b' }],
+      maxTokens: 800,
+    })))
+
+    expect(value.results).toMatchObject([
+      { provider: 'p1', model: 'a', text: 'p1/a', inputTokens: 7, outputTokens: 3 },
+      { provider: 'p2', model: 'b', text: 'p2/b', inputTokens: 7, outputTokens: 3 },
+    ])
+    expect(value.results.every(result => Number.isInteger(result.latencyMs) && result.latencyMs >= 0)).toBe(true)
+    expect([...first.calls, ...second.calls]).toHaveLength(2)
+    expect([...first.calls, ...second.calls].every(call => call.tools?.length === 0 && call.messages.length === 1)).toBe(true)
+    expect([...first.calls, ...second.calls].every(call => call.maxTokens === 800)).toBe(true)
+  })
+
+  it('stops a slow arena route at the requested deadline', async () => {
+    const ctx = await harness()
+    ctx.llm.registerAdapter(['slow'], new SlowArenaAdapter('Slow', ['m']))
+    const api = createApiProxy(ctx, DEFAULTS)
+
+    const value = expectOk(await api.llm.arena(request({
+      prompt: 'bounded question',
+      routes: [{ provider: 'slow', model: 'm' }],
+      timeoutMs: 20,
+    })))
+
+    expect(value.results[0]).toMatchObject({
+      provider: 'slow', model: 'm', text: '', error: 'Timed out after 20 ms',
+    })
+  })
+
   it('merges the configurable directory with live routes and appends undeclared ones', async () => {
     const ctx = await harness({ configurableProviders: false })
     ctx.llm.registerConfigurableProviders([

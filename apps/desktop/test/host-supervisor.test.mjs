@@ -115,11 +115,13 @@ test('passes the configured desktop DSH_HOME to the owned Host process', async (
   const supervisor = new HostSupervisor({
     sourceRoot: repositoryRoot,
     dshHome,
+    runAsNode: true,
     spawnProcess,
     startupTimeoutMs: 2_000,
     shutdownTimeoutMs: 2_000,
   })
   await supervisor.start()
   assert.equal(spawnOptions.env.DSH_HOME, dshHome)
+  assert.equal(spawnOptions.env.ELECTRON_RUN_AS_NODE, '1')
   await supervisor.stop()
 })

@@ -16,9 +16,9 @@ export type PluginsSettingsLocaleKey =
 export const en: Record<PluginsSettingsLocaleKey, string> = {
   nav: 'Plugins',
   title: 'Plugins',
-  intro: 'Configure and inspect the plugins installed in this deployment.',
+  intro: 'Extend your coding agent with local capabilities, then inspect what is active in this deployment.',
   tabs: 'Plugin views',
-  configurableTab: 'Plugin configuration',
+  configurableTab: 'Configuration',
   empty: 'This deployment exposes no plugin settings.',
   overridden: 'Overridden',
   reset: 'Reset to default',
@@ -56,10 +56,10 @@ export const en: Record<PluginsSettingsLocaleKey, string> = {
 /** Simplified Chinese copy. */
 export const zh: Record<PluginsSettingsLocaleKey, string> = {
   nav: '插件',
-  title: '插件',
-  intro: '配置和查看本部署已安装的插件。',
+  title: '插件中心',
+  intro: '用本地能力扩展编码智能体，并查看当前部署实际启用的插件。',
   tabs: '插件视图',
-  configurableTab: '插件配置',
+  configurableTab: '配置',
   empty: '本部署没有开放任何插件设置。',
   overridden: '已覆盖',
   reset: '恢复默认',

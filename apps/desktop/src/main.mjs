@@ -1,10 +1,13 @@
-import { app, BrowserWindow, dialog } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, utilityProcess } from 'electron'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { HostSupervisor, isHostRuntimeRoot } from './host-supervisor.mjs'
+import { registerDesktopUpdater } from './updater.mjs'
+import { createUtilityProcessSpawner } from './utility-process-spawner.mjs'
 
 const DESKTOP_DIR = fileURLToPath(new URL('.', import.meta.url))
-const PRODUCT_NAME = '深寻工作台'
+const PRODUCT_NAME = 'DeepSeek Harness 工作台'
+const PRODUCT_ICON = join(DESKTOP_DIR, '..', 'build', 'deepseek-icon.png')
 let mainWindow
 let hostSupervisor
 let hostInfo
@@ -13,7 +16,7 @@ let quitting = false
 function resolveSourceRoot() {
   const configuredRoot = process.env.DSH_DESKTOP_SOURCE_ROOT
   if (configuredRoot !== undefined) return resolve(configuredRoot)
-  if (app.isPackaged) return resolve(process.resourcesPath, 'runtime')
+  if (app.isPackaged) return resolve(process.resourcesPath, 'runtime.asar')
   return resolve(join(DESKTOP_DIR, '..', '..'))
 }
 
@@ -36,7 +39,15 @@ async function ensureHost() {
   if (hostInfo !== undefined) return hostInfo
   const sourceRoot = resolveSourceRoot()
   assertSourceRoot(sourceRoot)
-  hostSupervisor = new HostSupervisor({ sourceRoot, dshHome: resolveDshHome() })
+  hostSupervisor = new HostSupervisor({
+    sourceRoot,
+    dshHome: resolveDshHome(),
+    ...(app.isPackaged ? {
+      nodeCommand: 'electron-utility-process',
+      workingDirectory: process.resourcesPath,
+      spawnProcess: createUtilityProcessSpawner(utilityProcess),
+    } : {}),
+  })
   hostInfo = await hostSupervisor.start()
   return hostInfo
 }
@@ -52,11 +63,12 @@ async function createMainWindow() {
     show: false,
     backgroundColor: '#101114',
     title: PRODUCT_NAME,
+    icon: PRODUCT_ICON,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      preload: join(DESKTOP_DIR, 'preload.mjs'),
+      preload: join(DESKTOP_DIR, 'preload.cjs'),
     },
   })
 
@@ -68,7 +80,11 @@ async function createMainWindow() {
   window.on('closed', () => {
     if (mainWindow === window) mainWindow = undefined
   })
-  await window.loadURL(host.url)
+  try {
+    await window.loadURL(host.url)
+  } catch (error) {
+    throw hostSupervisor.enrichError(error)
+  }
   mainWindow = window
 }
 
@@ -105,7 +121,10 @@ if (!singleInstance) {
     void shutdown().finally(() => app.quit())
   })
 
-  app.whenReady().then(start)
+  app.whenReady().then(() => {
+    registerDesktopUpdater({ app, dialog, ipcMain, getWindow: () => mainWindow })
+    return start()
+  })
 
   app.on('activate', () => {
     if (mainWindow === undefined) void createMainWindow()

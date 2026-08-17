@@ -549,7 +549,9 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
     await page.waitForFunction(() => document.body.innerText.length > 50, undefined, { timeout: 15_000 })
     expect(pageErrors).toEqual([])
     await page.waitForFunction(
-      () => document.title !== '深寻工作台' && document.title.endsWith(' — 深寻工作台'),
+      () =>
+        document.title !== 'DeepSeek Harness 工作台' &&
+        document.title.endsWith(' — DeepSeek Harness 工作台'),
       undefined,
       { timeout: 15_000 },
     )
@@ -561,7 +563,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
     if (sessionId === undefined) throw new Error('created Web session was not listed')
     const durableTitle = await waitForProviderTitle(baseUrl, sessionId)
     await page.waitForFunction(
-      expected => document.title === `${expected} — 深寻工作台`,
+      expected => document.title === `${expected} — DeepSeek Harness 工作台`,
       durableTitle,
       { timeout: 15_000 },
     )

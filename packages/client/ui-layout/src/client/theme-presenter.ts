@@ -27,14 +27,8 @@ export class ThemePresenter {
   private appliedTokens: string[] = []
   /** The single metadata node this presenter inserts and removes. */
   private readonly themeColorMeta: HTMLMetaElement
-  /** Inline background properties that existed before this presenter took ownership. */
-  private readonly initialBackground: Readonly<{
-    image: string
-    size: string
-    position: string
-    attachment: string
-    customImage: string
-  }>
+  /** Wallpaper variable that existed before this presenter took ownership. */
+  private readonly initialCustomImage: string
 
   /** Create the presenter-owned metadata node before the first snapshot arrives. */
   constructor() {
@@ -47,13 +41,9 @@ export class ThemePresenter {
       : [...new Set(bootstrapTokens.split(' ').filter(Boolean))]
     document.body.removeAttribute(BOOTSTRAP_TOKENS_ATTRIBUTE)
     const fromBootstrap = document.body.hasAttribute(BOOTSTRAP_BACKGROUND_ATTRIBUTE)
-    this.initialBackground = Object.freeze({
-      image: fromBootstrap ? '' : document.body.style.backgroundImage,
-      size: fromBootstrap ? '' : document.body.style.backgroundSize,
-      position: fromBootstrap ? '' : document.body.style.backgroundPosition,
-      attachment: fromBootstrap ? '' : document.body.style.backgroundAttachment,
-      customImage: fromBootstrap ? '' : document.body.style.getPropertyValue('--dsh-custom-skin-image'),
-    })
+    this.initialCustomImage = fromBootstrap
+      ? ''
+      : document.body.style.getPropertyValue('--dsh-custom-skin-image')
     document.body.removeAttribute(BOOTSTRAP_BACKGROUND_ATTRIBUTE)
     this.themeColorMeta = document.createElement('meta')
     this.themeColorMeta.name = 'theme-color'
@@ -82,7 +72,7 @@ export class ThemePresenter {
       body.style.setProperty(name, value)
       this.appliedTokens.push(name)
     }
-    this.applyBackground(body, snapshot.backgroundImage, scheme)
+    this.applyWallpaper(body, snapshot.backgroundImage)
     this.themeColorMeta.content = getComputedStyle(body).backgroundColor
     if (!this.themeColorMeta.isConnected) document.head.append(this.themeColorMeta)
   }
@@ -97,35 +87,24 @@ export class ThemePresenter {
     body.removeAttribute(BOOTSTRAP_BACKGROUND_ATTRIBUTE)
     for (const name of this.appliedTokens) body.style.removeProperty(name)
     this.appliedTokens = []
-    this.restoreBackground(body)
+    this.restoreWallpaper(body)
     this.themeColorMeta.remove()
   }
 
-  private applyBackground(body: HTMLElement, image: string | undefined, scheme: 'light' | 'dark'): void {
+  private applyWallpaper(body: HTMLElement, image: string | undefined): void {
     body.removeAttribute(BOOTSTRAP_BACKGROUND_ATTRIBUTE)
     if (image === undefined) {
-      this.restoreBackground(body)
+      this.restoreWallpaper(body)
       return
     }
     body.style.setProperty('--dsh-custom-skin-image', `url("${image}")`)
-    const overlay = scheme === 'dark'
-      ? 'linear-gradient(rgba(6, 10, 18, 0.30), rgba(6, 10, 18, 0.50))'
-      : 'linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.28))'
-    body.style.backgroundImage = `${overlay}, url("${image}")`
-    body.style.backgroundSize = 'cover'
-    body.style.backgroundPosition = 'center'
-    body.style.backgroundAttachment = 'fixed'
   }
 
-  private restoreBackground(body: HTMLElement): void {
-    body.style.backgroundImage = this.initialBackground.image
-    body.style.backgroundSize = this.initialBackground.size
-    body.style.backgroundPosition = this.initialBackground.position
-    body.style.backgroundAttachment = this.initialBackground.attachment
-    if (this.initialBackground.customImage === '') {
+  private restoreWallpaper(body: HTMLElement): void {
+    if (this.initialCustomImage === '') {
       body.style.removeProperty('--dsh-custom-skin-image')
     } else {
-      body.style.setProperty('--dsh-custom-skin-image', this.initialBackground.customImage)
+      body.style.setProperty('--dsh-custom-skin-image', this.initialCustomImage)
     }
   }
 }

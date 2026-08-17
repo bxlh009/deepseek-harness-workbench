@@ -1,291 +1,35 @@
 /*
- * Image-skin composition layer.
+ * Image wallpaper layer.
  *
- * The image itself is owned by ui-theme and exposed as
- * --dsh-custom-skin-image. This sheet only composes the existing shell into
- * translucent panels when the custom skin is active; the normal palette keeps
- * its original geometry and surfaces.
+ * ui-theme publishes the image as --dsh-custom-skin-image. This sheet paints
+ * that asset behind the native application without selecting any component:
+ * skins may change tokens and decoration, never layout geometry or controls.
  */
 
-[data-image-skin-tiles] {
-  display: none;
+body[data-ds-skin='custom'] {
+  isolation: isolate;
 }
 
-body[data-ds-skin='custom'] {
-  --dsh-image-panel-radius: 24px;
-  background-color: var(--dsw-alias-bg-base);
+body[data-ds-skin='custom']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.28)),
+    var(--dsh-custom-skin-image);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+body[data-ds-skin='custom'][data-ds-dark-theme]::before {
+  background-image:
+    linear-gradient(rgba(6, 10, 18, 0.3), rgba(6, 10, 18, 0.5)),
+    var(--dsh-custom-skin-image);
 }
 
 body[data-ds-skin='custom'] #root {
   background: transparent;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-shell] {
-  background: transparent;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-sidebar-column],
-body[data-ds-skin='custom'] [data-image-skin-center-column],
-body[data-ds-skin='custom'] [data-image-skin-details-column] {
-  box-sizing: border-box;
-  background: transparent;
-  border: none;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-sidebar-column] {
-  padding: 10px 0 10px 10px;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-center-column] {
-  padding: 10px;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-shell]:not([data-details-collapsed])
-  [data-image-skin-details-column] {
-  padding: 10px 10px 10px 0;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-sidebar] {
-  width: auto !important;
-  height: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: var(--dsh-image-panel-radius);
-  background: var(--dsw-specific-sidebar-fill);
-  box-shadow: 0 16px 42px rgba(35, 54, 94, 0.12);
-  backdrop-filter: blur(18px) saturate(125%);
-  overflow: hidden;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-sidebar] button {
-  color: var(--dsw-alias-label-primary);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-sidebar] button:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-conversation] {
-  position: relative;
-  isolation: isolate;
-  box-sizing: border-box;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: var(--dsh-image-panel-radius);
-  background: var(--dsw-alias-bg-base);
-  box-shadow: 0 20px 52px rgba(35, 54, 94, 0.14);
-  backdrop-filter: blur(18px) saturate(125%);
-  overflow: hidden;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-conversation] [data-conversation-scroll],
-body[data-ds-skin='custom'] [data-image-skin-conversation] [data-composer-seat] {
-  background: transparent;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-conversation] [data-conversation-scroll] {
-  justify-content: center;
-  padding-top: 22px;
-  padding-bottom: 32px;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-hero] {
-  position: relative;
-  min-height: clamp(360px, 68vh, 620px);
-  box-sizing: border-box;
-  padding: 32px 28px 28px;
-  align-items: stretch;
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  border-radius: 22px;
-  background-image:
-    linear-gradient(132deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.14)),
-    var(--dsh-custom-skin-image);
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 18px 42px rgba(35, 54, 94, 0.16);
-  overflow: hidden;
-  isolation: isolate;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-hero]::before {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  content: '';
-  background:
-    radial-gradient(circle at 92% 10%, rgba(255, 255, 255, 0.9) 0 2px, transparent 3px),
-    radial-gradient(circle at 8% 86%, rgba(255, 255, 255, 0.75) 0 2px, transparent 3px),
-    linear-gradient(145deg, transparent 0 56%, rgba(255, 255, 255, 0.3) 56% 57%, transparent 57%);
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-stack] {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  align-self: stretch;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  max-width: none;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-headline] {
-  justify-content: start;
-  font-size: clamp(22px, 3vw, 32px);
-  line-height: 38px;
-  color: var(--dsw-alias-label-primary);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.32);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  align-self: end;
-  margin-top: 0;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-hero-body] {
-  display: none;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] > [data-image-skin-tile],
-body[data-ds-skin='custom'] [data-image-skin-tiles] > div {
-  min-height: 112px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 16px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.66);
-  box-shadow: 0 8px 22px rgba(35, 54, 94, 0.12);
-  color: var(--dsw-alias-label-primary);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  text-align: center;
-  backdrop-filter: blur(12px) saturate(130%);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] > div:nth-child(2) {
-  transform: translateY(8px);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] > div:nth-child(3) {
-  transform: translateY(-3px);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] > div:nth-child(4) {
-  transform: translateY(6px);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] > div > span:last-child {
-  max-width: 15ch;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-tiles] > div > span:first-child {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 14px;
-  background: var(--dsw-alias-state-business-tertiary);
-  color: var(--dsw-alias-state-business-primary);
-  font-family: var(--ds-font-family-code);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-workspace-row] {
-  margin-top: 2px;
-  padding-left: 20px;
-}
-
-body[data-ds-skin='custom'] [data-image-skin-workspace-row] button {
-  background: rgba(255, 255, 255, 0.38);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  box-shadow: 0 4px 12px rgba(35, 54, 94, 0.08);
-  backdrop-filter: blur(10px);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-card] {
-  border-color: rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 14px 32px rgba(35, 54, 94, 0.16);
-  backdrop-filter: blur(16px) saturate(130%);
-}
-
-body[data-ds-skin='custom'] [data-image-skin-card] .primary {
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--dsw-alias-state-business-primary) 28%, transparent);
-}
-
-body[data-ds-skin='custom'][data-ds-dark-theme] [data-image-skin-hero] {
-  border-color: rgba(255, 255, 255, 0.2);
-  background-image:
-    linear-gradient(132deg, rgba(8, 17, 31, 0.78), rgba(8, 17, 31, 0.42)),
-    var(--dsh-custom-skin-image);
-}
-
-body[data-ds-skin='custom'][data-ds-dark-theme] [data-image-skin-tiles] > div {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(8, 17, 31, 0.56);
-}
-
-body[data-ds-skin='custom'][data-ds-dark-theme] [data-image-skin-workspace-row] button,
-body[data-ds-skin='custom'][data-ds-dark-theme] [data-image-skin-card] {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(8, 17, 31, 0.64);
-}
-
-@media (max-width: 900px) {
-  body[data-ds-skin='custom'] [data-image-skin-tiles] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 620px) {
-  body[data-ds-skin='custom'] [data-image-skin-sidebar-column],
-  body[data-ds-skin='custom'] [data-image-skin-center-column] {
-    padding: 6px;
-  }
-
-  body[data-ds-skin='custom'] [data-image-skin-hero] {
-    min-height: 0;
-    padding: 22px 16px 18px;
-    border-radius: 18px;
-  }
-
-  body[data-ds-skin='custom'] [data-image-skin-tiles] {
-    gap: 8px;
-    margin-top: 18px;
-  }
-
-  body[data-ds-skin='custom'] [data-image-skin-stack] {
-    display: flex;
-    height: auto;
-  }
-
-  body[data-ds-skin='custom'] [data-image-skin-hero-body] {
-    display: flex;
-  }
-
-  body[data-ds-skin='custom'] [data-image-skin-tiles] > div {
-    min-height: 92px;
-    padding: 12px 8px;
-    border-radius: 14px;
-    font-size: 12px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body[data-ds-skin='custom'] [data-image-skin-tiles] > div {
-    transform: none;
-  }
 }

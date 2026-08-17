@@ -66,11 +66,11 @@ The `settings.*`, `credentials.*`, and `llm.*` domains are the configuration-pag
 
 ## Model Experience
 
-None, as the package defines the client↔host wire contract and carriers; nothing here reaches a model request.
+`llm.arena` is the one direct model-execution method: it sends one isolated user message to one through five routes, with no tools or Session history, and returns visible text, latency, token usage, and per-route failures. The settings arena uses independent one-route calls so anonymous answer slots settle progressively. Other methods in this package do not assemble model requests.
 
 #### KV Cache effect
 
-None; this package neither assembles nor sends a provider request.
+Arena calls have no shared conversation prefix; each compared route receives a cold one-message request.
 
 ## Known Limitations and Deferred Work
 

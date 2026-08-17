@@ -21,6 +21,7 @@ const SEAT_CONTENT: Record<string, string> = {
 function mount({
   wide = true,
   onboardingActive = true,
+  container,
   rows = [
     { id: 'general', order: 0, label: 'General' },
     { id: 'models', order: 10, label: 'Models' },
@@ -30,7 +31,7 @@ function mount({
     { id: 'welcome', order: -100 },
     { id: 'credential', order: 0 },
   ],
-}: { wide?: boolean; onboardingActive?: boolean; rows?: Row[]; steps?: Step[] } = {}) {
+}: { wide?: boolean; onboardingActive?: boolean; container?: HTMLElement; rows?: Row[]; steps?: Step[] } = {}) {
   // Mutable row source standing in for the bound useSections hook; bump()
   // plays a ledger change through the same observable contract.
   let current = rows
@@ -49,6 +50,11 @@ function mount({
       byId: { 'active-session': { blank: false } },
     })) as never
   const unusedHook = (() => { throw new Error('unused by SettingsRoot') }) as never
+  let openFromNavigation: ((sectionId: string) => void) | undefined
+  const attachNavigation = vi.fn((handler: (sectionId: string) => void) => {
+    openFromNavigation = handler
+    return () => { openFromNavigation = undefined }
+  })
   const props: SettingsRootComponentProps = {
     useSessions,
     useWorkspaces: unusedHook,
@@ -64,15 +70,22 @@ function mount({
       return select(current)
     },
     renderSlot,
+    attachNavigation,
   }
-  const view = render(<SettingsRoot {...props} />)
+  const view = render(<SettingsRoot {...props} />, container === undefined ? undefined : { container })
   const bump = (next: Row[]) => {
     act(() => {
       current = next
       for (const fn of [...listeners]) fn()
     })
   }
-  return { view, renderSlot, bump, listeners }
+  return {
+    view,
+    renderSlot,
+    bump,
+    listeners,
+    openFromNavigation: (sectionId: string) => { openFromNavigation?.(sectionId) },
+  }
 }
 
 function openPanel() {
@@ -98,6 +111,22 @@ describe('SettingsRoot trigger', () => {
 })
 
 describe('SettingsPanel chrome seats', () => {
+  it('portals the modal outside a filtered sidebar containing block', () => {
+    const sidebar = document.createElement('aside')
+    sidebar.style.backdropFilter = 'blur(18px)'
+    document.body.append(sidebar)
+
+    try {
+      mount({ container: sidebar })
+      openPanel()
+
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.parentElement?.parentElement).toBe(document.body)
+    } finally {
+      sidebar.remove()
+    }
+  })
+
   it('names the dialog via aria-labelledby pointing at the header seat node', () => {
     mount()
     openPanel()
@@ -162,6 +191,19 @@ describe('SettingsPanel close paths', () => {
 })
 
 describe('SettingsPanel navigation', () => {
+  it('opens a requested section through the cross-plugin navigation attachment', () => {
+    const { openFromNavigation } = mount({
+      rows: [
+        { id: 'general', order: 0, label: 'General' },
+        { id: 'plugins', order: 30, label: 'Plugins' },
+      ],
+    })
+    act(() => { openFromNavigation('plugins') })
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Plugins' }).getAttribute('aria-current')).toBe('true')
+    expect(screen.getByTestId('section-plugins')).toBeTruthy()
+  })
+
   it('projects rows, marks the first active, and renders only that section', () => {
     mount()
     openPanel()

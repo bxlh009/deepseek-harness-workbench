@@ -73,7 +73,7 @@
       name: '@deepseek-ai/dsh-llm-retry'
 
     # User-settings document (`$DSH_HOME/settings.yaml`, hot-reloaded): a
-    # `llm-deepseek:` or `llm-pi-ai:` section there overrides the adapter entries
+    # `llm-deepseek:`, `llm-pi-ai:`, or `llm-fusion:` section there overrides the adapter entries
     # below without a restart, and is what the web Models page writes.
     - id: settings
       name: '@deepseek-ai/dsh-settings-file'
@@ -94,6 +94,13 @@
     # document.
     - id: llm-pi-ai
       name: '@deepseek-ai/dsh-llm-pi-ai'
+
+    # Virtual models configured by the Models page. A bare mount is dormant;
+    # saving at least one fusion registers the `fusion` provider live.
+    - id: llm-fusion
+      name: '@deepseek-ai/dsh-llm-fusion'
+      config:
+        models: []
 
     - id: session-persistence-jsonl
       name: '@deepseek-ai/dsh-session-persistence-jsonl'

@@ -1,14 +1,14 @@
-# 深寻工作台
+# DeepSeek Harness 工作台
 
 [English](README.md) | 中文
 
-深寻工作台（`dsh`）是面向中文开发者的本地优先编码代理桌面应用。它把项目、对话、计划、工具执行和审批放进一个工作区，让用户通过类似 Codex 的工作流交给代理完成真实的软件任务。
+DeepSeek Harness 工作台（`dsh`）是面向中文开发者的本地优先编码代理桌面应用。它把项目、对话、计划、工具执行和审批放进一个工作区，让用户通过类似 Codex 的工作流交给代理完成真实的软件任务。
 
 ## 上游来源与项目关系
 
-深寻工作台是基于 DeepSeek 官方开源项目 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 二次开发的独立项目。DeepSeek Harness 提供核心运行时、会话、工具和插件架构；本项目在此基础上增加独立桌面产品层、中文用户体验、模型配置、任务工作流、审查界面和本地分发。
+DeepSeek Harness 工作台是基于 DeepSeek 官方开源项目 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 二次开发的独立项目。DeepSeek Harness 提供核心运行时、会话、工具和插件架构；本项目在此基础上增加独立桌面产品层、中文用户体验、模型配置、任务工作流、审查界面和本地分发。
 
-深寻工作台不是 DeepSeek 官方产品，也不代表 DeepSeek 官方立场。本项目保留上游 MIT 许可证、版权声明、第三方声明和清晰的下游修改记录，不会把 DeepSeek Harness 的实现描述为自身原创。
+DeepSeek Harness 工作台不是 DeepSeek 官方产品，也不代表 DeepSeek 官方立场。本项目保留上游 MIT 许可证、版权声明、第三方声明和清晰的下游修改记录，不会把 DeepSeek Harness 的实现描述为自身原创。
 
 当前版本的产品核心是：
 
@@ -21,7 +21,7 @@
 
 ## 开发者预览
 
-深寻工作台目前处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**
+DeepSeek Harness 工作台目前处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**
 
 ### 能力状态
 
@@ -31,8 +31,9 @@
 | Windows Electron 桌面壳与内置本地运行时 | 已实现并完成本地打包 |
 | 中文桌面品牌与核心界面本地化 | 已在本地实现 |
 | 主题皮肤与自定义图片皮肤 | 已实现并通过相关组件测试 |
-| 拉取请求、Sites、计划任务和完整插件管理器 | 尚未形成产品工作流；占位入口不算能力 |
-| 代码签名、自动更新、公开稳定版与生产验收 | 尚未完成 |
+| 模型提供商、融合模型、插件清单与视觉输入路由 | 已作为下游工作台功能实现 |
+| 自动更新提示与 GitHub Release 分发 | 已面向 Windows NSIS 安装版实现 |
+| Windows 代码签名与生产验收 | 尚未完成 |
 
 ## 运行
 
@@ -50,7 +51,7 @@ pnpm.cmd run desktop:dev
 pnpm.cmd run desktop:dist
 ```
 
-产物位于 `dist/desktop/artifacts/`，包括 `ShenXun-Workbench-*-portable.exe` 和安装程序。当前构建尚未签名，也没有自动更新渠道。
+产物位于 `dist/desktop/artifacts/`，包括 `DeepSeek-Harness-Workbench-*-portable.exe` 和安装程序。安装版会检查独立 GitHub Releases 更新渠道，并由用户决定是否下载和安装。当前构建尚未签名。
 
 ### 通过 `npm` 运行
 
@@ -67,8 +68,8 @@ npx @deepseek-ai/dsh web
 如需从仓库源码运行：
 
 ```sh
-git clone https://github.com/bxlh009/shenxun-workbench.git
-cd shenxun-workbench
+git clone https://github.com/bxlh009/deepseek-harness-workbench.git
+cd deepseek-harness-workbench
 pnpm install
 pnpm run build
 pnpm dsh web
@@ -76,7 +77,7 @@ pnpm dsh web
 
 ## 支持与上游
 
-- 深寻工作台发布后，产品问题统一提交到本项目 GitHub 仓库。
+- DeepSeek Harness 工作台发布后，产品问题统一提交到本项目 GitHub 仓库。
 - 只有确认不是下游修改引起的、可独立复现的运行时缺陷，才提交给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。
 - 原始 DeepSeek Harness 文档和社区渠道以其上游仓库为准。
 

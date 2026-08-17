@@ -32,6 +32,8 @@ export interface SettingsOnboardingStep {
  * the shell reads no locale state and subscribes through the bound hook.
  */
 export type SettingsRootInjected = {
+  /** Connect the component-local modal state to cross-plugin navigation. */
+  attachNavigation: (handler: (sectionId: string) => void) => () => void
   hooks: {
     /** settings.section ledger projected into ordered nav rows. */
     sections: HostObservable<readonly SettingsSectionRow[]>

@@ -2,13 +2,14 @@
 
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { WebServer, WebRoute } from '@deepseek-ai/dsh-host-webserver'
-import { ClientModuleRegistry } from '../src/index.ts'
+import { ClientModuleRegistry, resolvePackageJson } from '../src/index.ts'
 
 let root: string | undefined
 
@@ -69,6 +70,30 @@ function construct(packageNames: string[]): ClientModuleRegistry {
 }
 
 describe('client bundle activation', () => {
+  it('resolves from the bundled runtime after an empty writable profile misses', () => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-modules-resolver-')))
+    const runtimeRoot = join(root, 'runtime')
+    const profileRoot = join(root, 'profile')
+    const packageName = '@fixture/runtime-only'
+    const pkgRoot = join(runtimeRoot, 'node_modules', ...packageName.split('/'))
+    mkdirSync(pkgRoot, { recursive: true })
+    mkdirSync(profileRoot, { recursive: true })
+    writeFileSync(join(pkgRoot, 'package.json'), JSON.stringify({ name: packageName }))
+
+    const resolved = resolvePackageJson(
+      packageName,
+      createRequire(pathToFileURL(join(profileRoot, 'package.json')).href),
+      createRequire(pathToFileURL(join(runtimeRoot, 'package.json')).href),
+    )
+    expect(resolved).toBe(join(pkgRoot, 'package.json'))
+  })
+
+  it('falls back to the bundled runtime when the writable profile has no dependencies', () => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-modules-empty-profile-')))
+    const packageName = '@deepseek-ai/dsh-client-modules'
+    expect(construct([packageName]).graph().entries.map(entry => entry.id)).toEqual([packageName])
+  })
+
   it('allows sibling dsh roles', () => {
     const currentName = '@fixture/current-client-field'
     const clientPath = writePackage(currentName, {

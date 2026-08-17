@@ -19,15 +19,6 @@ exports[`sidebar shell snapshots > renders the collapsed rail after the crossfad
         type="button"
       >
         <svg
-          aria-hidden="true"
-          class="railFish"
-          data-content="965fe321"
-          fill="none"
-          height="17.6580310880829"
-          viewBox="0 0 23.16 17.04"
-          width="24"
-        />
-        <svg
           class="panelIcon"
           data-content="35f95b0c"
           fill="none"
@@ -186,75 +177,9 @@ exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsul
           Coding tasks
         </span>
       </div>
-      <div
-        class="navItem navItemPlanned"
-        title="Planned"
-      >
-        <svg
-          class="navIcon"
-          data-content="ae283ba4"
-          fill="none"
-          height="16"
-          viewBox="0 0 16 16"
-          width="16"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-        <span>
-          Pull requests
-        </span>
-        <span
-          class="navBadge"
-        >
-          Planned
-        </span>
-      </div>
-      <div
-        class="navItem navItemPlanned"
-        title="Planned"
-      >
-        <svg
-          class="navIcon"
-          data-content="f23fa4b8"
-          fill="none"
-          height="16"
-          viewBox="0 0 14 14"
-          width="16"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-        <span>
-          Sites
-        </span>
-        <span
-          class="navBadge"
-        >
-          Planned
-        </span>
-      </div>
-      <div
-        class="navItem navItemPlanned"
-        title="Planned"
-      >
-        <svg
-          class="navIcon"
-          data-content="f869e73c"
-          fill="none"
-          height="16"
-          viewBox="0 0 14 14"
-          width="16"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-        <span>
-          Scheduled
-        </span>
-        <span
-          class="navBadge"
-        >
-          Planned
-        </span>
-      </div>
-      <div
-        class="navItem navItemPlanned"
-        title="Planned"
+      <button
+        class="navItem navItemButton"
+        type="button"
       >
         <svg
           class="navIcon"
@@ -268,12 +193,7 @@ exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsul
         <span>
           Plugins
         </span>
-        <span
-          class="navBadge"
-        >
-          Planned
-        </span>
-      </div>
+      </button>
     </nav>
     <div
       class="regionArea"
@@ -343,7 +263,7 @@ exports[`sidebar shell snapshots > renders the expanded column in the default lo
             <span
               class="brandName"
             >
-              深寻工作台
+              DeepSeek Harness 工作台
             </span>
             <span
               class="brandTagline"
@@ -409,75 +329,9 @@ exports[`sidebar shell snapshots > renders the expanded column in the default lo
           编码任务
         </span>
       </div>
-      <div
-        class="navItem navItemPlanned"
-        title="规划中"
-      >
-        <svg
-          class="navIcon"
-          data-content="ae283ba4"
-          fill="none"
-          height="16"
-          viewBox="0 0 16 16"
-          width="16"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-        <span>
-          拉取请求
-        </span>
-        <span
-          class="navBadge"
-        >
-          规划中
-        </span>
-      </div>
-      <div
-        class="navItem navItemPlanned"
-        title="规划中"
-      >
-        <svg
-          class="navIcon"
-          data-content="f23fa4b8"
-          fill="none"
-          height="16"
-          viewBox="0 0 14 14"
-          width="16"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-        <span>
-          站点
-        </span>
-        <span
-          class="navBadge"
-        >
-          规划中
-        </span>
-      </div>
-      <div
-        class="navItem navItemPlanned"
-        title="规划中"
-      >
-        <svg
-          class="navIcon"
-          data-content="f869e73c"
-          fill="none"
-          height="16"
-          viewBox="0 0 14 14"
-          width="16"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-        <span>
-          已安排
-        </span>
-        <span
-          class="navBadge"
-        >
-          规划中
-        </span>
-      </div>
-      <div
-        class="navItem navItemPlanned"
-        title="规划中"
+      <button
+        class="navItem navItemButton"
+        type="button"
       >
         <svg
           class="navIcon"
@@ -491,12 +345,7 @@ exports[`sidebar shell snapshots > renders the expanded column in the default lo
         <span>
           插件
         </span>
-        <span
-          class="navBadge"
-        >
-          规划中
-        </span>
-      </div>
+      </button>
     </nav>
     <div
       class="regionArea"

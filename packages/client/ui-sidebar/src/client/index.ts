@@ -2,6 +2,8 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+// Type-only: pulls the settings-navigation service into the Context face.
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { SidebarRootInjected } from './contract/slots.ts'
 import { SidebarRoot } from './SidebarRoot.tsx'
 import { en, zh, type SidebarKey } from './locales.ts'
@@ -23,7 +25,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const NS = 'sidebar'
 
 /** Services required by the sidebar plugin. */
-export const inject = ['slots', 'layout', 'sessions', 'workspaces', 'locale']
+export const inject = ['slots', 'layout', 'sessions', 'workspaces', 'locale', 'settingsNavigation']
 
 /** Registers the sidebar shell and its service callbacks.
  * @param ctx - Client root context.
@@ -36,6 +38,7 @@ export function apply(ctx: ClientContext): void {
     // (current Session Workspace, then recent Workspace).
     startSession: (workspaceId) => { ctx.workspaces.startSession(workspaceId) },
     toggleSidebar: () => { ctx.layout.toggleSidebar() },
+    openSettings: (sectionId) => { ctx.settingsNavigation.open(sectionId) },
   })
   ctx.effect(
     () => ctx.slots.register({

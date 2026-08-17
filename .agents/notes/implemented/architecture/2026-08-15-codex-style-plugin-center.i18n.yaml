@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-15-codex-style-plugin-center.md
+2026-08-15-codex-style-plugin-center.md: 2cc7547f1ab26911b9552a0e2bbd643ea9290047
+2026-08-15-codex-style-plugin-center.zh.md: 98a9a33581c8c7cf26d0d09953fdc92613e5818b

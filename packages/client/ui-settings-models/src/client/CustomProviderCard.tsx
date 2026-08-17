@@ -50,12 +50,26 @@ interface ProviderPreset {
   readonly route: string
   readonly displayName: string
   readonly baseURL: string
+  readonly models?: readonly ModelDraft[]
+  readonly requiresKey?: boolean
 }
 
 /** Local OpenAI-compatible servers that can be configured without an API key. */
 const LOCAL_PROVIDER_PRESETS: readonly ProviderPreset[] = [
   { route: 'ollama', displayName: 'Ollama', baseURL: 'http://127.0.0.1:11434/v1' },
   { route: 'lm-studio', displayName: 'LM Studio', baseURL: 'http://127.0.0.1:1234/v1' },
+]
+
+/** Hosted vision routes whose current public API is OpenAI-compatible. */
+const CLOUD_VISION_PROVIDER_PRESETS: readonly ProviderPreset[] = [
+  {
+    route: 'groq-vision', displayName: 'Groq Vision', baseURL: 'https://api.groq.com/openai/v1', requiresKey: true,
+    models: [{ id: 'qwen/qwen3.6-27b', name: 'Qwen 3.6 27B', input: ['text', 'image'] }],
+  },
+  {
+    route: 'gemini-vision', displayName: 'Gemini Vision', baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai', requiresKey: true,
+    models: [{ id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash-Lite', input: ['text', 'image'] }],
+  },
 ]
 
 /** Props of {@link CustomProviderCard}. */
@@ -96,6 +110,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
   const [protocol, setProtocol] = useState(protocols[0] ?? '')
   const [keyDraft, setKeyDraft] = useState('')
   const [models, setModels] = useState<readonly ModelDraft[]>([])
+  const [requiresKey, setRequiresKey] = useState(false)
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<string | undefined>(undefined)
   /**
@@ -121,14 +136,14 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
   const keyValue = keyDraft.trim()
   const ready = route.length > 0 && !routeInvalid && !routeTaken
     && baseURL.length > 0 && models.length > 0 && modelFailure === undefined
-    && keyFailure === undefined
+    && keyFailure === undefined && (!requiresKey || keyValue.length > 0)
   // The one blocked gate worth a line under the form. A satisfied card says
   // nothing at all rather than printing an empty paragraph.
   const hint = failure !== undefined || ready
     // The key field prints its own failure directly beneath itself, so a card
     // blocked only by the key stays silent here rather than answering with the
     // next unmet gate — which is satisfied, and reads as a second, false fault.
-    || keyFailure !== undefined
+    || keyFailure !== undefined || (requiresKey && keyValue.length === 0)
     // Same for the route id, and it must be tested rather than assumed: the
     // fallback arm below reads "no models yet", so an unmet route gate would
     // fall through to it and contradict the filled-in list right above.
@@ -144,6 +159,8 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
     setRoute(preset.route)
     setDisplayName(preset.displayName)
     setBaseURL(preset.baseURL)
+    setModels(preset.models?.map(model => ({ ...model })) ?? [])
+    setRequiresKey(preset.requiresKey === true)
     if (protocols.includes('openai-completions')) setProtocol('openai-completions')
     setFailure(undefined)
   }
@@ -230,6 +247,23 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
         <p className={styles['advancedHint']}>{t('localPresetsHint')}</p>
       </div>
       <div className={styles['field']}>
+        <span className={styles['fieldLabel']}>{t('cloudVisionPresets')}</span>
+        <div className={styles['providerPresets']}>
+          {CLOUD_VISION_PROVIDER_PRESETS.map(preset => (
+            <button
+              key={preset.route}
+              className={styles['secondaryButton']}
+              type="button"
+              disabled={profileDisabled || taken.includes(preset.route)}
+              onClick={() => { applyPreset(preset) }}
+            >
+              {preset.displayName}
+            </button>
+          ))}
+        </div>
+        <p className={styles['advancedHint']}>{t('cloudVisionPresetsHint')}</p>
+      </div>
+      <div className={styles['field']}>
         <span className={styles['fieldLabel']}>{t('customRoute')}</span>
         <input
           className={styles['input']}
@@ -298,7 +332,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
             what a blank field means here instead: this route may authenticate
             through the provider's own ambient discovery or OAuth. */}
         {keyFailure === undefined
-          ? null
+          ? requiresKey && keyValue.length === 0 ? <p className={styles['advancedHint']}>{t('cloudVisionKeyRequired')}</p> : null
           : <p className={styles['error']}>{t(keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure)}</p>}
       </div>
       <ModelListEditor
@@ -310,7 +344,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           api: protocol,
           ...keyValue.length === 0 ? {} : { apiKey: keyValue },
         }}
-        probeBlocked={keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure}
+        probeBlocked={keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure ?? (requiresKey && keyValue.length === 0 ? 'cloudVisionKeyRequired' : undefined)}
         api={api}
         t={t}
         disabled={profileDisabled}

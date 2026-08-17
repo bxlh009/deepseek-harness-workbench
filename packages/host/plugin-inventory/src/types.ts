@@ -19,6 +19,8 @@ export interface PluginInventoryEntry {
   readonly moduleName: string
   /** Effective Loader enablement, including disabled ancestor groups. */
   readonly enabled: boolean
+  /** Whether the desktop UI may directly change this entry's enablement. */
+  readonly toggleable: boolean
   readonly fiberPhase: PluginFiberPhase
 }
 

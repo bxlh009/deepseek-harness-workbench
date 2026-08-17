@@ -14,10 +14,11 @@
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { IApiClient } from '@deepseek-ai/dsh-api-remotes/client'
+import type { IApiClient, SettingsNamespaceView } from '@deepseek-ai/dsh-api-remotes/client'
 import { Button, IconPlusOutline16, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-web-react'
 import { CustomProviderCard } from './CustomProviderCard.tsx'
+import { FusionModels } from './FusionModels.tsx'
 import { deriveKeyRef, messageOf, protocolChoices, providerUsable } from './store.ts'
 import type { ModelsSettingsState, ModelsSettingsStore, ProviderRow } from './store.ts'
 import { ProviderEditor, type ProviderEditorProps } from './ProviderEditor.tsx'
@@ -163,6 +164,37 @@ export function providerCopy(template: string, target: ProviderIdentity): string
   return template.replace('{provider}', () => providerTargetLabel(target))
 }
 
+/** Fusion profiles that still depend on one provider route. */
+export function fusionProfilesUsingProvider(
+  namespace: SettingsNamespaceView | undefined,
+  provider: string,
+): string[] {
+  if (typeof namespace?.value !== 'object' || namespace.value === null) return []
+  const models = (namespace.value as { models?: unknown }).models
+  if (!Array.isArray(models)) return []
+  return models.flatMap((entry) => {
+    if (typeof entry !== 'object' || entry === null) return []
+    const profile = entry as {
+      id?: unknown
+      name?: unknown
+      candidates?: unknown
+      synthesizer?: unknown
+      visionProvider?: unknown
+    }
+    const routes = [
+      ...Array.isArray(profile.candidates) ? profile.candidates : [],
+      profile.synthesizer,
+    ]
+    const used = profile.visionProvider === provider || routes.some(route =>
+      typeof route === 'object' && route !== null
+      && (route as { provider?: unknown }).provider === provider)
+    if (!used) return []
+    const id = typeof profile.id === 'string' ? profile.id : '?'
+    const name = typeof profile.name === 'string' && profile.name.length > 0 ? profile.name : id
+    return [`${name} (${id})`]
+  })
+}
+
 /**
  * Render the Models section content column.
  * @param props - slot-delivered injected dependencies.
@@ -221,6 +253,11 @@ function Loaded({ injected }: { injected: ModelsSectionInjected }): ReactNode {
   const confirmDelete = (): void => {
     /* v8 ignore next -- the action only renders with a target and is disabled while a deletion is pending */
     if (deleteTarget === undefined || deleting) return
+    const fusionUsers = fusionProfilesUsingProvider(state.namespaces.get('llm-fusion'), deleteTarget.provider)
+    if (fusionUsers.length > 0) {
+      setDeleteFailure(t('deleteBlockedByFusion').replace('{models}', fusionUsers.join(', ')))
+      return
+    }
     setDeleting(true)
     setDeleteFailure(undefined)
     void removeProviderProfile(api, controller, deleteTarget)
@@ -261,9 +298,10 @@ function Loaded({ injected }: { injected: ModelsSectionInjected }): ReactNode {
 
   // One fact decides both first-run postures on this page and the onboarding
   // step: whether the user already has a provider to talk to.
-  const anyUsable = state.rows.some(providerUsable)
-  const configured = state.rows.filter(row => row.configured)
-  const addable = state.rows.filter(row => !row.configured && row.entry.settingsNs !== '')
+  const providerRows = state.rows.filter(row => row.entry.provider !== 'fusion')
+  const anyUsable = providerRows.some(providerUsable)
+  const configured = providerRows.filter(row => row.configured)
+  const addable = providerRows.filter(row => !row.configured && row.entry.settingsNs !== '')
   const addTarget = adding ? editing : undefined
   const addNamespace = addTarget === undefined ? undefined : state.namespaces.get(addTarget.settingsNs)
   // Hand-declared routes live in the pi-ai namespace, which is also the only
@@ -275,6 +313,14 @@ function Loaded({ injected }: { injected: ModelsSectionInjected }): ReactNode {
     <div className={styles['section']}>
       <h2 className={styles['title']}>{t('title')}</h2>
       <p className={styles['intro']}>{t('intro')}</p>
+      <FusionModels
+        groups={state.catalogGroups}
+        namespace={state.namespaces.get('llm-fusion')}
+        writable={state.writable}
+        api={api}
+        controller={controller}
+        t={t}
+      />
       {!state.writable && state.status === 'ready' ? <p className={styles['notice']}>{t('readOnly')}</p> : null}
       {savedIdentity === undefined
         ? null

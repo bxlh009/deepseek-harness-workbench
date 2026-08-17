@@ -205,6 +205,18 @@ function bench(over?: BenchOptions) {
 }
 
 describe('image draft rail', () => {
+  it('offers a visible image picker and admits its selected files', () => {
+    const addImages = vi.fn(() => null)
+    const { view } = bench({ addImages })
+    const image = new File([Uint8Array.of(1, 2, 3)], 'picked.png', { type: 'image/png' })
+    const picker = view.container.querySelector<HTMLInputElement>('input[type="file"]')
+    expect(view.getByLabelText('添加图片')).toBeTruthy()
+    expect(picker?.accept).toBe('image/png,image/jpeg,image/webp,image/gif')
+    if (picker === null) throw new Error('missing image picker')
+    fireEvent.change(picker, { target: { files: [image] } })
+    expect(addImages).toHaveBeenCalledWith([image])
+  })
+
   it('collects clipboard files while preserving text from a mixed paste', () => {
     const addImages = vi.fn(() => null)
     const { textarea, shell } = bench({ addImages })

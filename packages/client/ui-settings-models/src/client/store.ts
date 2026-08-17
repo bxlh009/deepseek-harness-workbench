@@ -7,7 +7,7 @@
  */
 
 import type {
-  ConfigurableProviderView, CredentialView, IApiClient, SettingsNamespaceView,
+  ConfigurableProviderView, CredentialView, IApiClient, ModelProviderGroup, SettingsNamespaceView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
@@ -46,6 +46,8 @@ export interface ModelsSettingsState {
   rows: readonly ProviderRow[]
   /** Namespace views by ns, for the editor's schema/layers/secrets. */
   namespaces: ReadonlyMap<string, SettingsNamespaceView>
+  /** Live model catalog used to build fusion-model choices. */
+  catalogGroups: readonly ModelProviderGroup[]
 }
 
 /**
@@ -99,7 +101,7 @@ function apiKeyEnvOf(namespace: SettingsNamespaceView | undefined, path: readonl
 export class ModelsSettingsStore {
   /** The snapshot the section renders from (uSES-safe store). */
   readonly store: SnapshotStore<ModelsSettingsState> = createSnapshotStore<ModelsSettingsState>({
-    status: 'idle', error: null, credentialError: null, writable: false, rows: [], namespaces: new Map(),
+    status: 'idle', error: null, credentialError: null, writable: false, rows: [], namespaces: new Map(), catalogGroups: [],
   })
 
   /** Latest load wins; an older response never overwrites a newer one. */
@@ -122,16 +124,22 @@ export class ModelsSettingsStore {
     let providers: ConfigurableProviderView[]
     let writable: boolean
     let views: SettingsNamespaceView[]
+    let catalogGroups: ModelProviderGroup[]
     try {
-      const [providersResponse, settingsResponse] = await Promise.all([
+      const modelCatalog = typeof this.api.llm.models === 'function'
+        ? this.api.llm.models({}).catch(() => undefined)
+        : Promise.resolve(undefined)
+      const [providersResponse, settingsResponse, modelsResponse] = await Promise.all([
         this.api.llm.providers({}),
         this.api.settings.describe({}),
+        modelCatalog,
       ])
       if (!providersResponse.result.ok) throw new Error(providersResponse.result.error.message)
       if (!settingsResponse.result.ok) throw new Error(settingsResponse.result.error.message)
       providers = providersResponse.result.value.providers
       writable = settingsResponse.result.value.writable
       views = settingsResponse.result.value.namespaces
+      catalogGroups = modelsResponse?.result.ok === true ? modelsResponse.result.value.groups : []
     } catch (error) {
       if (generation !== this.generation) return
       this.store.update((s) => {
@@ -185,6 +193,7 @@ export class ModelsSettingsStore {
           : {},
       }))
       s.namespaces = namespaces
+      s.catalogGroups = catalogGroups
     })
   }
 }

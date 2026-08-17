@@ -31,6 +31,21 @@ export interface ConfigurableProviderView {
   declared?: boolean
 }
 
+/** One provider/model route executed by the blind comparison arena. */
+export interface LlmArenaRoute {
+  provider: string
+  model: string
+}
+
+/** One completed arena answer, including provider accounting when available. */
+export interface LlmArenaResult extends LlmArenaRoute {
+  text: string
+  latencyMs: number
+  inputTokens?: number
+  outputTokens?: number
+  error?: string
+}
+
 /** Llm-domain unary methods (the map keys llm.* of RpcMethodMap). */
 export interface LlmApi {
   /**
@@ -47,6 +62,16 @@ export interface LlmApi {
    * failures ride `failures` without failing the sound groups.
    */
   models(request: RpcRequest<{}>): Promise<RpcResponse<{ groups: ModelProviderGroup[]; failures: ModelCatalogFailure[] }>>
+
+  /**
+   * Execute one to five text-only routes for a blind comparison.
+   * The call has no session history and exposes no tools; a route failure is
+   * returned beside successful answers instead of failing the whole round.
+   */
+  arena(
+    request: RpcRequest<{ prompt: string; routes: LlmArenaRoute[]; maxTokens?: number; timeoutMs?: number }>,
+    signal?: AbortSignal,
+  ): Promise<RpcResponse<{ results: LlmArenaResult[] }>>
 
   /**
    * Interrogate a provider endpoint the configuration surface is still

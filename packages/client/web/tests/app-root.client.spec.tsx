@@ -33,7 +33,7 @@ function mount() {
 describe('AppRoot', () => {
   it('shows the loading page and never calls renderApp before settled', () => {
     const { queryByTestId, counts, getByText } = mount()
-    expect(getByText('深寻工作台')).toBeTruthy()
+    expect(getByText('DeepSeek Harness 工作台')).toBeTruthy()
     expect(queryByTestId('real-ui')).toBeNull()
     expect(counts()).toBe(0)
   })

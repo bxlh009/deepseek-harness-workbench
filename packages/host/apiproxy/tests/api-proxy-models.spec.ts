@@ -196,6 +196,39 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 
+  it('admits an image for a text-only model when an LLM fallback accepts that modality', async () => {
+    const { ctx, agent, sessionId } = await harness()
+    registerTextOnly(ctx)
+    const saveImage = vi.fn((input: { data: Uint8Array; mediaType: 'image/png' }) => Promise.resolve({
+      attachmentId: 'att-fallback', mediaType: input.mediaType, bytes: input.data.byteLength, width: 1, height: 1,
+    }))
+    ctx.provide('attachments', {
+      imageLimits: { maxImageBytes: 4, maxImagesPerMessage: 2, maxMessageImageBytes: 4, maxImagePixels: 4, mediaTypes: ['image/png'] },
+      validateImage: vi.fn(() => Promise.resolve()),
+      saveImage,
+    } as never)
+    const followup = vi.fn()
+    Object.assign(agent, { followup })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-chat' }), cwd: '/tmp',
+    })
+    expect((await api.sessions.selectModel(request({ sessionId, provider: 'text-only', model: 'plain' }))).result.ok).toBe(true)
+    ctx.on('llm/input-admission', (query, next) => (
+      query.modality === 'image' ? Promise.resolve(true) : next()
+    ))
+
+    const response = await api.sessions.prompt(request({
+      sessionId,
+      mode: 'queue' as const,
+      content: [{ type: 'image' as const, mediaType: 'image/png' as const, data: 'AQ==' }],
+    }))
+
+    expect(response.result.ok).toBe(true)
+    expect(saveImage).toHaveBeenCalledOnce()
+    expect(followup).toHaveBeenCalledOnce()
+    await ctx.fiber.dispose()
+  })
+
   it('refuses a text-only selection while durable or pending image content remains visible', async () => {
     const { ctx, agent, sessionId } = await harness()
     registerTextOnly(ctx)

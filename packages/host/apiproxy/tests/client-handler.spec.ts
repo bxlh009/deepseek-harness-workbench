@@ -125,6 +125,7 @@ function scriptedApi(overrides: {
     llm: {
       providers: r => ok(r, { providers: [] }),
       models: r => ok(r, { groups: [], failures: [] }),
+      arena: err,
       discoverModels: err,
       ...overrides.llm,
     },

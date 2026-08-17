@@ -9,6 +9,7 @@
  */
 
 import { spawnSync } from 'node:child_process'
+import { createPackageWithOptions } from '@electron/asar'
 import {
   copyFileSync,
   existsSync,
@@ -25,6 +26,7 @@ const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUTPUT_ROOT = join(REPOSITORY_ROOT, 'dist', 'desktop', 'package')
 const TARBALL_ROOT = join(OUTPUT_ROOT, 'tarballs')
 const RUNTIME_ROOT = join(OUTPUT_ROOT, 'runtime')
+const RUNTIME_ARCHIVE = join(OUTPUT_ROOT, 'runtime.asar')
 const NPM_CACHE_ROOT = join(OUTPUT_ROOT, 'npm-cache')
 const VERSION = JSON.parse(readFileSync(join(REPOSITORY_ROOT, 'package.json'), 'utf8')).version
 
@@ -145,7 +147,16 @@ function buildRuntime(packages) {
   }, null, 2)}\n`)
 }
 
-function main() {
+async function archiveRuntime() {
+  await createPackageWithOptions(RUNTIME_ROOT, RUNTIME_ARCHIVE, {
+    dot: true,
+    // @electron/asar matches this pattern against absolute Windows paths with
+    // matchBase enabled. A slash-containing glob misses nested native modules.
+    unpack: '*.{node,exe,dll}',
+  })
+}
+
+async function main() {
   rmSync(OUTPUT_ROOT, { recursive: true, force: true })
   mkdirSync(TARBALL_ROOT, { recursive: true })
 
@@ -159,7 +170,8 @@ function main() {
     throw new Error('The packed runtime does not contain @deepseek-ai/dsh.')
   }
   buildRuntime(uniquePackages)
+  await archiveRuntime()
   console.log(`desktop runtime: ${String(uniquePackages.length)} package tarball(s) installed in ${RUNTIME_ROOT}`)
 }
 
-main()
+await main()

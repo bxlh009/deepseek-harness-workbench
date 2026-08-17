@@ -44,6 +44,11 @@ function numberOf(model: ModelDraft, key: string): number | undefined {
   return typeof value === 'number' ? value : undefined
 }
 
+/** Whether this configured route explicitly admits image input. */
+function acceptsImages(model: ModelDraft): boolean {
+  return Array.isArray(model.input) && model.input.includes('image')
+}
+
 /** What an interrogation needs, taken from the live form. */
 export interface ProbeTarget {
   /** Settings namespace whose adapter family answers. */
@@ -210,7 +215,7 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     })
   }
 
-  const patch = (index: number, next: Record<string, string | number | undefined>): void => {
+  const patch = (index: number, next: Record<string, unknown>): void => {
     onChange(models.map((model, at) => {
       if (at !== index) return model
       // Rebuilt rather than spread over: an emptied optional field has to leave
@@ -416,6 +421,21 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
                     disabled={disabled}
                     onChange={(event) => { editCapacity(index, 'maxTokens', event.target.value) }}
                   />
+                </label>
+                <label className={`${styles['modelField']} ${styles['modelVisionField']}`}>
+                  <span className={styles['modelVisionControl']}>
+                    <input
+                      type="checkbox"
+                      checked={acceptsImages(model)}
+                      aria-label={`${t('modelVisionInput')} ${index + 1}`}
+                      disabled={disabled}
+                      onChange={(event) => {
+                        patch(index, { input: event.target.checked ? ['text', 'image'] : ['text'] })
+                      }}
+                    />
+                    <span className={styles['modelFieldLabel']}>{t('modelVisionInput')}</span>
+                  </span>
+                  <span className={styles['modelFieldHint']}>{t('modelVisionInputHint')}</span>
                 </label>
               </div>
             )

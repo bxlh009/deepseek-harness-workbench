@@ -9,6 +9,7 @@ const DEFAULT_STARTUP_TIMEOUT_MS = 30_000
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 7_000
 const DEFAULT_FORCE_SHUTDOWN_TIMEOUT_MS = 3_000
 const DEFAULT_POLL_INTERVAL_MS = 100
+const DEFAULT_STARTUP_STABILITY_MS = 300
 const MAX_LOG_LINES = 80
 
 /**
@@ -83,12 +84,13 @@ export function buildHostArguments(hostEntry, { host, port }) {
  * @param {{dshHome?: string, baseEnvironment?: NodeJS.ProcessEnv}} options - Desktop Host environment options.
  * @returns {NodeJS.ProcessEnv}
  */
-export function buildHostEnvironment({ dshHome, baseEnvironment = process.env } = {}) {
+export function buildHostEnvironment({ dshHome, runAsNode = false, baseEnvironment = process.env } = {}) {
   const environment = {
     ...baseEnvironment,
     DSH_TELEMETRY_DISABLED: baseEnvironment.DSH_TELEMETRY_DISABLED ?? '1',
   }
   if (dshHome !== undefined) environment.DSH_HOME = resolve(dshHome)
+  if (runAsNode) environment.ELECTRON_RUN_AS_NODE = '1'
   return environment
 }
 
@@ -218,15 +220,18 @@ export class HostSupervisor {
   #stopPromise
 
   /**
-   * @param {{sourceRoot: string, host?: string, nodeCommand?: string, dshHome?: string, spawnProcess?: typeof defaultSpawn, startupTimeoutMs?: number, shutdownTimeoutMs?: number, forceShutdownTimeoutMs?: number}} options - Host launch policy.
+   * @param {{sourceRoot: string, host?: string, nodeCommand?: string, workingDirectory?: string, runAsNode?: boolean, dshHome?: string, spawnProcess?: typeof defaultSpawn, startupTimeoutMs?: number, shutdownTimeoutMs?: number, forceShutdownTimeoutMs?: number}} options - Host launch policy.
    */
   constructor({
     sourceRoot,
     host = DEFAULT_HOST,
     nodeCommand,
+    workingDirectory,
+    runAsNode = false,
     dshHome,
     spawnProcess = defaultSpawn,
     startupTimeoutMs = DEFAULT_STARTUP_TIMEOUT_MS,
+    startupStabilityMs = DEFAULT_STARTUP_STABILITY_MS,
     shutdownTimeoutMs = DEFAULT_SHUTDOWN_TIMEOUT_MS,
     forceShutdownTimeoutMs = DEFAULT_FORCE_SHUTDOWN_TIMEOUT_MS,
   }) {
@@ -234,18 +239,27 @@ export class HostSupervisor {
     this.sourceRoot = resolve(sourceRoot)
     this.host = host
     this.nodeCommand = resolveNodeCommand(this.sourceRoot, nodeCommand)
+    this.workingDirectory = workingDirectory === undefined ? this.sourceRoot : resolve(workingDirectory)
+    this.runAsNode = runAsNode
     this.dshHome = dshHome === undefined ? undefined : resolve(dshHome)
     this.spawnProcess = spawnProcess
     this.startupTimeoutMs = startupTimeoutMs
+    this.startupStabilityMs = startupStabilityMs
     this.shutdownTimeoutMs = shutdownTimeoutMs
     this.forceShutdownTimeoutMs = forceShutdownTimeoutMs
     this.#child = undefined
     this.#stopPromise = undefined
+    this.outputLines = []
   }
 
   /** @returns {boolean} Whether the Host process is still owned by this supervisor. */
   get running() {
     return this.#child !== undefined && !hasExited(this.#child)
+  }
+
+  /** Append captured Host output to an error raised after readiness. */
+  enrichError(error) {
+    return formatStartupFailure(error, this.sourceRoot, this.outputLines)
   }
 
   /**
@@ -258,9 +272,10 @@ export class HostSupervisor {
     const hostEntry = resolveHostEntry(this.sourceRoot)
     const args = buildHostArguments(hostEntry, { host: this.host, port })
     const lines = []
+    this.outputLines = lines
     const child = this.spawnProcess(this.nodeCommand, args, {
-      cwd: this.sourceRoot,
-      env: buildHostEnvironment({ dshHome: this.dshHome }),
+      cwd: this.workingDirectory,
+      env: buildHostEnvironment({ dshHome: this.dshHome, runAsNode: this.runAsNode }),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       windowsHide: true,
@@ -276,6 +291,10 @@ export class HostSupervisor {
         timeoutMs: this.startupTimeoutMs,
         isAlive: () => spawnError === undefined && !hasExited(child),
       })
+      await delay(this.startupStabilityMs)
+      if (spawnError !== undefined || hasExited(child)) {
+        throw spawnError ?? new Error('Host exited immediately after its readiness probe succeeded.')
+      }
       return { url, port, pid: typeof child.pid === 'number' ? child.pid : null }
     } catch (error) {
       await this.stop()

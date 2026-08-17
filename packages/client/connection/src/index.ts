@@ -80,7 +80,8 @@ export const Config: z<ConnectionConfig> = z.object({
  * carries a draft credential, and it makes the HOST issue a GET to a URL the
  * caller chose and reports back the status or the parsed body — an anonymous
  * LAN caller would have a probe for whatever the host can reach and the
- * browser cannot.
+ * browser cannot. `llm.arena` is likewise privileged because each call spends
+ * the user's configured provider quota.
  *
  * The model catalog (`llm.providers`, `llm.models`) is deliberately NOT here:
  * it carries provider ids, display names, and model lists — no endpoints,
@@ -116,6 +117,8 @@ const PRIVILEGED_METHODS = new Set([
   'credentials.set',
   'credentials.unset',
   'llm.discoverModels',
+  'llm.arena',
+  'pluginInventory.setEnabled',
 ])
 
 /**

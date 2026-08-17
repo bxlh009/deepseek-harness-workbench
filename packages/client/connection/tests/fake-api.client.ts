@@ -221,6 +221,7 @@ export class FakeApiClient implements IApiClient {
   readonly llm: IApiClient['llm'] = {
     providers: payload => this.record('llm.providers', payload, Promise.resolve(ok({ providers: [] }))),
     models: payload => this.record('llm.models', payload, Promise.resolve(ok({ groups: [], failures: [] }))),
+    arena: payload => this.record('llm.arena', payload, Promise.resolve(ok({ results: [] }))),
     discoverModels: payload => this.record('llm.discoverModels', payload, Promise.resolve(ok({ models: [] }))),
   }
 

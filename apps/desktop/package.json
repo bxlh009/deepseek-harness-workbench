@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-desktop",
-  "description": "独立的中文编码代理桌面工作台",
-  "version": "0.1.0-rc.5",
+  "description": "基于 DeepSeek Harness 的中文编码代理桌面工作台",
+  "version": "0.1.0-rc.6",
   "private": true,
   "type": "module",
   "main": "src/main.mjs",
@@ -16,49 +16,62 @@
   },
   "build": {
     "appId": "ai.deepseek.dsh",
-    "productName": "深寻工作台",
+    "productName": "DeepSeek Harness 工作台",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "bxlh009",
+        "repo": "deepseek-harness-workbench"
+      }
+    ],
     "asar": true,
     "directories": {
       "output": "../../dist/desktop/artifacts"
     },
     "files": [
       "src/**/*",
+      "build/deepseek-icon.png",
       "package.json"
     ],
     "extraResources": [
       {
-        "from": "../../dist/desktop/package/runtime",
-        "to": "runtime",
-        "filter": [
-          "**/*"
-        ]
+        "from": "../../dist/desktop/package/runtime.asar",
+        "to": "runtime.asar"
       },
       {
-        "from": "../../dist/desktop/package/runtime/node_modules",
-        "to": "runtime/node_modules",
+        "from": "../../dist/desktop/package/runtime.asar.unpacked/node.exe",
+        "to": "runtime.asar.unpacked/node.exe"
+      },
+      {
+        "from": "../../dist/desktop/package/runtime.asar.unpacked/node_modules",
+        "to": "runtime.asar.unpacked/node_modules",
         "filter": [
           "**/*"
         ]
       }
     ],
     "win": {
+      "icon": "build/deepseek-icon.png",
       "target": [
         "portable",
         "nsis"
       ],
-      "artifactName": "ShenXun-Workbench-${version}-${arch}.${ext}"
+      "artifactName": "DeepSeek-Harness-Workbench-${version}-${arch}.${ext}"
     },
     "portable": {
-      "artifactName": "ShenXun-Workbench-${version}-${arch}-portable.${ext}"
+      "artifactName": "DeepSeek-Harness-Workbench-${version}-${arch}-portable.${ext}"
     },
     "nsis": {
-      "artifactName": "ShenXun-Workbench-${version}-${arch}-setup.${ext}",
+      "artifactName": "DeepSeek-Harness-Workbench-${version}-${arch}-setup.${ext}",
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "深寻工作台",
+      "shortcutName": "DeepSeek Harness 工作台",
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

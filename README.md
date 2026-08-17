@@ -1,14 +1,14 @@
-# ShenXun Workbench
+# DeepSeek Harness Workbench
 
 English | [中文](README.zh.md)
 
-ShenXun Workbench (`dsh`) is a local-first desktop coding agent for Chinese developers. It brings projects, conversations, planning, tool execution, and approvals into one workspace so users can delegate real software tasks through a Codex-like workflow.
+DeepSeek Harness Workbench (`dsh`) is a local-first desktop coding agent for Chinese developers. It brings projects, conversations, planning, tool execution, and approvals into one workspace so users can delegate real software tasks through a Codex-like workflow.
 
 ## Upstream and project relationship
 
-ShenXun Workbench is an independent derivative of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), the open-source agent harness published by DeepSeek. DeepSeek Harness supplies the core runtime, sessions, tools, and plugin architecture; this project adds an independent desktop product layer, Chinese user experience, provider configuration, task workflow, review surfaces, and local distribution.
+DeepSeek Harness Workbench is an independent derivative of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), the open-source agent harness published by DeepSeek. DeepSeek Harness supplies the core runtime, sessions, tools, and plugin architecture; this project adds an independent desktop product layer, Chinese user experience, provider configuration, task workflow, review surfaces, and local distribution.
 
-ShenXun Workbench is not an official DeepSeek product and does not represent DeepSeek. The project preserves the upstream MIT license, copyright notices, third-party notices, and a clear record of downstream modifications. It does not claim the DeepSeek Harness implementation as original work.
+DeepSeek Harness Workbench is not an official DeepSeek product and does not represent DeepSeek. The project preserves the upstream MIT license, copyright notices, third-party notices, and a clear record of downstream modifications. It does not claim the DeepSeek Harness implementation as original work.
 
 The current product core includes:
 
@@ -21,7 +21,7 @@ It uses an architecture where **everything is a plugin**, and is powered by [Cor
 
 ## Developer preview
 
-ShenXun Workbench is currently in _developer preview_ and is iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+DeepSeek Harness Workbench is currently in _developer preview_ and is iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
 
 ### Capability status
 
@@ -31,8 +31,9 @@ ShenXun Workbench is currently in _developer preview_ and is iterating rapidly. 
 | Windows Electron shell and bundled local runtime | Implemented and locally packaged |
 | Chinese desktop branding and core interface localization | Implemented locally |
 | Theme skins and custom image skin | Implemented with related component tests |
-| Pull requests, Sites, scheduled tasks, and a complete plugin manager | Not implemented as product workflows; placeholders are not capabilities |
-| Code signing, automatic updates, public stable releases, and production acceptance | Not completed |
+| Provider configuration, fusion models, plugin inventory, and vision input routing | Implemented as downstream workbench features |
+| Automatic update prompts and GitHub Release delivery | Implemented for Windows NSIS installs |
+| Windows code signing and production acceptance | Not completed |
 
 ## Run
 
@@ -50,7 +51,7 @@ Build the Windows portable executable and installer with:
 pnpm.cmd run desktop:dist
 ```
 
-Artifacts are written to `dist/desktop/artifacts/` as `ShenXun-Workbench-*-portable.exe` and the corresponding installer. Current builds are unsigned and have no automatic update channel.
+Artifacts are written to `dist/desktop/artifacts/` as `DeepSeek-Harness-Workbench-*-portable.exe` and the corresponding installer. Installed builds check the independent GitHub Releases channel and let the user decide whether to download and install an update. Current builds are unsigned.
 
 ### Run from `npm`
 
@@ -67,8 +68,8 @@ The command starts the Web UI, served at `http://127.0.0.1:3080` by default. See
 To run from a repository checkout:
 
 ```sh
-git clone https://github.com/bxlh009/shenxun-workbench.git
-cd shenxun-workbench
+git clone https://github.com/bxlh009/deepseek-harness-workbench.git
+cd deepseek-harness-workbench
 pnpm install
 pnpm run build
 pnpm dsh web

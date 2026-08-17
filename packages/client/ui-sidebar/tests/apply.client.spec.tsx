@@ -12,10 +12,12 @@ async function bench(declare = true) {
   const layout = { toggleSidebar: vi.fn() }
   const workspaces = { startSession: vi.fn() }
   const sessions = { open: vi.fn(), clear: vi.fn() }
+  const settingsNavigation = { open: vi.fn() }
   ctx.provide('layout', layout)
   ctx.provide('sessions', sessions as never)
   ctx.provide('workspaces', workspaces as never)
   ctx.provide('locale', new LocaleRuntime(ctx))
+  ctx.provide('settingsNavigation', settingsNavigation as never)
   const slots = ctx.get('slots') as SlotRegistry
   if (declare) {
     slots.register(
@@ -23,12 +25,12 @@ async function bench(declare = true) {
       () => null,
     )
   }
-  return { ctx, slots, layout, workspaces, sessions }
+  return { ctx, slots, layout, workspaces, sessions, settingsNavigation }
 }
 
 describe('ui-sidebar apply', () => {
   it('declares only the services it uses', () => {
-    expect(inject).toEqual(['slots', 'layout', 'sessions', 'workspaces', 'locale'])
+    expect(inject).toEqual(['slots', 'layout', 'sessions', 'workspaces', 'locale', 'settingsNavigation'])
   })
 
   it('registers the shell and declares its child seats', async () => {
@@ -41,7 +43,7 @@ describe('ui-sidebar apply', () => {
     // Copy rides the standard locale seat, not the inject face.
     expect(b.slots.entries('sidebar')[0]!.locale).toBe('sidebar')
     const injected = (b.slots.entries('sidebar')[0]!.inject as () => SidebarRootInjected)()
-    expect(Object.keys(injected)).toEqual(['startSession', 'toggleSidebar'])
+    expect(Object.keys(injected)).toEqual(['startSession', 'toggleSidebar', 'openSettings'])
     // Both arms delegate to the runtime's shared New Session action.
     injected.startSession('workspace' as never)
     expect(b.workspaces.startSession).toHaveBeenCalledWith('workspace')
@@ -49,6 +51,8 @@ describe('ui-sidebar apply', () => {
     expect(b.workspaces.startSession).toHaveBeenLastCalledWith(undefined)
     injected.toggleSidebar()
     expect(b.layout.toggleSidebar).toHaveBeenCalledOnce()
+    injected.openSettings('plugins')
+    expect(b.settingsNavigation.open).toHaveBeenCalledWith('plugins')
   })
 
   it('fails when no live owner declared the sidebar slot', async () => {

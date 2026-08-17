@@ -1,5 +1,6 @@
 /** The General section: one column rendering feature-owned item contributions. */
 import type { PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import { DesktopUpdateRow } from './DesktopUpdateRow.tsx'
 import css from './GeneralSection.module.css'
 
 /** Full component props: section owner share plus item render share. */
@@ -15,6 +16,7 @@ export function GeneralSection({ renderSlot }: GeneralSectionComponentProps) {
   return (
     <div className={css.section}>
       {renderSlot('settings.general.item', {})}
+      <DesktopUpdateRow />
     </div>
   )
 }

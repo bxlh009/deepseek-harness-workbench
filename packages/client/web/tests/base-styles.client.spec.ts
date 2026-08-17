@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest'
 
 const THEME_PACKAGE = '@deepseek-ai/dsh-client-ui-theme'
 const baseCss = readFileSync(fileURLToPath(new URL('../src/base.css', import.meta.url)), 'utf8')
+const imageSkinCss = readFileSync(fileURLToPath(new URL('../src/image-skin.css', import.meta.url)), 'utf8')
 const themeManifest = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../ui-theme/package.json', import.meta.url)), 'utf8'),
 ) as { exports: Record<string, string>; files: string[] }
@@ -73,5 +74,17 @@ describe('web shell base.css', () => {
     const scrollbar = imports.indexOf(`${THEME_PACKAGE}/styles/scrollbar.css`)
     expect(platform).toBeGreaterThanOrEqual(0)
     expect(scrollbar).toBeGreaterThan(platform)
+  })
+})
+
+describe('image skin composition', () => {
+  it('keeps wallpaper decoration independent from every application component', () => {
+    expect(imageSkinCss).not.toContain('[data-image-skin-')
+    const wallpaper = /body\[data-ds-skin='custom'\]::before\s*\{([^{}]*)\}/.exec(imageSkinCss)
+    expect(wallpaper).not.toBeNull()
+    expect(wallpaper?.[1]).toContain('position: fixed')
+    expect(wallpaper?.[1]).toContain('inset: 0')
+    expect(wallpaper?.[1]).toContain('pointer-events: none')
+    expect(wallpaper?.[1]).toContain('var(--dsh-custom-skin-image)')
   })
 })

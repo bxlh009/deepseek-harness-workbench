@@ -192,21 +192,6 @@
   height: 36px;
 }
 
-/* Rail logo swap: collapsed, the toggle rests as the whale mark (brand ink,
-   no hover circle) and hovering reveals the panel icon — the expand
-   affordance (figma sidebar-hover flow). Expanded it is a plain panel icon. */
-.collapsed .toggle .panelIcon {
-  display: none;
-}
-
-.collapsed .toggle:hover .panelIcon {
-  display: inline;
-}
-
-.collapsed .toggle:hover .railFish {
-  display: none;
-}
-
 /* Rail icons ride the primary ink (figma rail spec); expanded keeps the
    secondary icon-button ink. */
 .collapsed .iconButton {
@@ -297,21 +282,23 @@
   font-weight: 500;
 }
 
-.navItemPlanned {
-  color: var(--dsw-alias-label-tertiary);
+.navItemButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.navItemButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
 }
 
 .navIcon {
   flex: none;
   color: currentColor;
-}
-
-.navBadge {
-  margin-left: auto;
-  color: var(--dsw-alias-label-caption);
-  font-size: 10px;
-  line-height: 16px;
-  white-space: nowrap;
 }
 
 /* Region seat: always mounted so the foot never moves. Its trailing margin

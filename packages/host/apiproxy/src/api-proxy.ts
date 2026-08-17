@@ -12,9 +12,10 @@ import type { Agent, ModelSelection, ModelSelectionRef, AgentOptions, AgentStatu
 import type {} from '@deepseek-ai/dsh-agent-presets/types'
 import { AttachmentError } from '@deepseek-ai/dsh-attachment'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
-import { contentHasImage, createUserMessage, freezeMessage, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
+import { BlockAssembler, contentHasImage, createUserMessage, freezeMessage, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
 import { errorChain } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock, MessageSource } from '@deepseek-ai/dsh-llm'
+import type { LlmArenaResult, LlmArenaRoute } from './api/llm.ts'
 import { isAppendSurfaceEvent, isJsonValue } from '@deepseek-ai/dsh-session'
 import type { JsonValue, Session, SessionEvent, SessionEventMap, SessionHeader, SessionId, UserMessage } from '@deepseek-ai/dsh-session'
 import type { SessionPersistence } from '@deepseek-ai/dsh-session-persistence'
@@ -352,6 +353,7 @@ async function buildModelCatalog(ctx: Context): Promise<{
           id: model.id,
           name: model.name,
           ...model.description === undefined ? {} : { description: model.description },
+          ...model.inputModalities === undefined ? {} : { inputModalities: [...model.inputModalities] },
           ...reasoning === undefined ? {} : { reasoning },
         }
       }))
@@ -373,6 +375,68 @@ async function buildModelCatalog(ctx: Context): Promise<{
   return {
     groups: catalog.flatMap(item => item.kind === 'group' ? [item.group] : []).filter(group => group.models.length > 0),
     failures: catalog.flatMap(item => item.kind === 'failure' ? [item.failure] : []),
+  }
+}
+
+/** Execute one isolated, tool-free arena route and retain failures as rows. */
+async function runArenaRoute(
+  ctx: Context,
+  prompt: string,
+  route: LlmArenaRoute,
+  maxTokens?: number,
+  timeoutMs?: number,
+  signal?: AbortSignal,
+): Promise<LlmArenaResult> {
+  const started = Date.now()
+  const timeoutSignal = timeoutMs === undefined ? undefined : AbortSignal.timeout(timeoutMs)
+  const requestSignal = signal === undefined
+    ? timeoutSignal
+    : timeoutSignal === undefined ? signal : AbortSignal.any([signal, timeoutSignal])
+  try {
+    const assembler = new BlockAssembler()
+    for await (const chunk of ctx.llm.stream({
+      provider: route.provider,
+      model: route.model,
+      messages: [createUserMessage({
+        content: [{ type: 'text', text: prompt }],
+        source: { kind: 'user' },
+      })],
+      tools: [],
+      ...maxTokens === undefined ? {} : { maxTokens },
+      ...requestSignal === undefined ? {} : { signal: requestSignal },
+    })) assembler.push(chunk)
+    if (assembler.finish.kind === 'error' || assembler.finish.kind === 'aborted') {
+      return {
+        ...route,
+        text: '',
+        latencyMs: Date.now() - started,
+        error: timeoutSignal?.aborted === true
+          ? `Timed out after ${timeoutMs} ms`
+          : assembler.finish.failure.message,
+      }
+    }
+    const usage = assembler.usage
+    return {
+      ...route,
+      text: assembler.blocks()
+        .filter(block => block.type === 'text')
+        .map(block => block.text)
+        .join('\n'),
+      latencyMs: Date.now() - started,
+      ...usage === undefined ? {} : {
+        inputTokens: usage.inputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0),
+        outputTokens: usage.outputTokens,
+      },
+    }
+  } catch (error: unknown) {
+    return {
+      ...route,
+      text: '',
+      latencyMs: Date.now() - started,
+      error: timeoutSignal?.aborted === true
+        ? `Timed out after ${timeoutMs} ms`
+        : error instanceof Error ? error.message : String(error),
+    }
   }
 }
 
@@ -2295,8 +2359,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             const pendingImage = [...found.agent.inbox.nextTurn, ...found.agent.inbox.nextStep]
               .some(message => contentHasImage(message.content))
             if (pendingImage || messagesHaveImage(found.agent.session.deriveMessages())) {
-              const info = await ctx.llm.resolveModelInfo(resolved.provider, resolved.model)
-              if (info.inputModalities !== undefined && !info.inputModalities.includes('image')) {
+              if (!await ctx.llm.acceptsInput(resolved.provider, resolved.model, 'image')) {
                 return err(request, {
                   code: 'model-unavailable',
                   message: `Model "${resolved.model}" does not accept image input, but this session already contains images; select an image-capable model.`,
@@ -2484,8 +2547,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           try {
             if (hasImage) {
               const current = selectionFor(agent).current
-              const modelInfo = await ctx.llm.resolveModelInfo(current.provider, current.model)
-              if (modelInfo.inputModalities !== undefined && !modelInfo.inputModalities.includes('image')) {
+              if (!await ctx.llm.acceptsInput(current.provider, current.model, 'image')) {
                 return err(request, {
                   code: 'attachment-error',
                   message: `Model "${current.model}" does not support image input.`,
@@ -3399,6 +3461,12 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
 
       async models(request) {
         return ok(request, await buildModelCatalog(ctx))
+      },
+
+      async arena(request, signal) {
+        const { prompt, routes, maxTokens, timeoutMs } = request.payload
+        const results = await Promise.all(routes.map(route => runArenaRoute(ctx, prompt, route, maxTokens, timeoutMs, signal)))
+        return ok(request, { results })
       },
 
       async discoverModels(request, signal) {

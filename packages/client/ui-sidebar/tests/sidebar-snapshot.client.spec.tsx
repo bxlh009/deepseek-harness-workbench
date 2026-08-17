@@ -32,6 +32,7 @@ async function bench(options: { locale?: 'en' } = {}) {
   const locale = new LocaleRuntime(runtime.ctx)
   if (options.locale === 'en') locale.setLocale('en')
   runtime.provide('locale', locale)
+  runtime.provide('settingsNavigation', { open: vi.fn() })
   runtime.slots.installLocale(locale)
   await runtime.declare({ 'sidebar': { kind: 'single', scope: 'root' } })
   await runtime.mount({ inject: [...inject], apply })

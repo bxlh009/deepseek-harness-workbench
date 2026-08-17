@@ -146,6 +146,7 @@
     "postinstall": "node scripts/install-lefthook.mjs"
   },
   "devDependencies": {
+    "@electron/asar": "3.4.1",
     "@agentclientprotocol/sdk": "0.25.1",
     "@deepseek-ai/dsh-tool-session-query": "workspace:^",
     "@stylistic/eslint-plugin": "^5.10.0",

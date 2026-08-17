@@ -39,6 +39,32 @@ const FIBER_PHASE = {
   [FIBER_STATE.UNLOADING]: 'unloading',
 } as const satisfies Record<FiberState, PluginFiberPhase>
 
+/** Runtime spine modules that must remain mounted so the user can manage the app. */
+const PROTECTED_MODULE_MARKERS = [
+  'cordis:include',
+  'cordis:group',
+  'dsh-api-gateway',
+  'dsh-api-remotes',
+  'dsh-client-connection',
+  'dsh-client-modules',
+  'dsh-client-runtime',
+  'dsh-client-web',
+  'dsh-client-ui-conversation',
+  'dsh-client-ui-layout',
+  'dsh-client-ui-settings',
+  'dsh-client-ui-sidebar',
+  'dsh-host-apiproxy',
+  'dsh-host-frontend-static',
+  'dsh-host-plugin-inventory',
+  'dsh-host-webserver',
+  'dsh-typert-loader',
+  'dsh-typert-registry',
+] as const
+
+function isProtectedModule(moduleName: string): boolean {
+  return PROTECTED_MODULE_MARKERS.some(marker => moduleName.includes(marker))
+}
+
 /** Remote-only service exposing the Loader's current non-group entry state. */
 export class PluginInventoryGateway extends TypertRemoteService {
   static inject = ['loader']
@@ -62,10 +88,23 @@ export class PluginInventoryGateway extends TypertRemoteService {
         entryId: pluginEntryId(entry.id),
         moduleName: entry.options.name,
         enabled: !entry.disabled,
+        toggleable: !isProtectedModule(entry.options.name),
         fiberPhase: entry.fiber === undefined ? null : FIBER_PHASE[entry.fiber.state],
       })
     }
     return { entries }
+  }
+
+  /** Persist one optional Loader entry's disabled flag and mount or dispose it. */
+  @Remote('setEnabled')
+  async setEnabled(entryId: PluginEntryId, enabled: boolean): Promise<PluginInventorySnapshot> {
+    const entry = this.ctx.loader.resolve(entryId)
+    if (entry.options.group) throw new Error(`cannot toggle group entry ${entryId}`)
+    if (isProtectedModule(entry.options.name)) {
+      throw new Error(`cannot toggle protected core plugin ${entry.options.name}`)
+    }
+    await this.ctx.loader.update(entryId, { disabled: enabled ? null : true })
+    return this.list()
   }
 }
 

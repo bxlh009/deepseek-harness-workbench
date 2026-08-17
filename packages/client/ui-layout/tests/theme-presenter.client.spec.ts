@@ -109,18 +109,17 @@ describe('ThemePresenter', () => {
     expect(meta?.isConnected).toBe(false)
   })
 
-  it('applies the custom image as a restrained background and retracts it on clear', () => {
+  it('publishes the custom image without taking ownership of the page background', () => {
+    document.body.style.backgroundImage = 'linear-gradient(red, blue)'
+    document.body.style.backgroundSize = '12px 12px'
     const presenter = new ThemePresenter()
     presenter.apply({ ...snapshot('light', {}, 'custom'), backgroundImage: 'data:image/png;base64,AA==' })
-    expect(document.body.style.backgroundImage).toContain('data:image/png;base64,AA==')
-    expect(document.body.style.backgroundImage).toContain('rgba(255, 255, 255, 0.12)')
-    expect(document.body.style.backgroundImage).toContain('rgba(255, 255, 255, 0.28)')
-    expect(document.body.style.backgroundImage).not.toContain('rgba(255, 255, 255, 0.72)')
-    expect(document.body.style.backgroundSize).toBe('cover')
+    expect(document.body.style.backgroundImage).toBe('linear-gradient(red, blue)')
+    expect(document.body.style.backgroundSize).toBe('12px 12px')
     expect(document.body.style.getPropertyValue('--dsh-custom-skin-image')).toContain('data:image/png;base64,AA==')
     presenter.apply(snapshot('light'))
-    expect(document.body.style.backgroundImage).toBe('')
-    expect(document.body.style.backgroundSize).toBe('')
+    expect(document.body.style.backgroundImage).toBe('linear-gradient(red, blue)')
+    expect(document.body.style.backgroundSize).toBe('12px 12px')
     expect(document.body.style.getPropertyValue('--dsh-custom-skin-image')).toBe('')
   })
 })

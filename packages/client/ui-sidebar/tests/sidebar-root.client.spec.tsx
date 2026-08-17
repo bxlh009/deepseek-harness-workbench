@@ -24,6 +24,7 @@ const neverHook = (() => { throw new Error('shell must not read global hooks') }
 function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; width?: number } = {}) {
   const startSession = vi.fn()
   const toggleSidebar = vi.fn()
+  const openSettings = vi.fn()
   let regionOwner: SidebarSectionOwnerProps | undefined
   let settingsOwner: SidebarSettingsOwnerProps | undefined
   let footerActionOwner: SidebarFooterActionOwnerProps | undefined
@@ -32,7 +33,7 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
     <SidebarRoot
       collapsed={current.collapsed} width={current.width}
       useSessions={neverHook} useWorkspaces={neverHook}
-      startSession={startSession} toggleSidebar={toggleSidebar} t={t}
+      startSession={startSession} toggleSidebar={toggleSidebar} openSettings={openSettings} t={t}
       renderSlot={((
         key: string,
         owner: SidebarFooterActionOwnerProps | SidebarSectionOwnerProps | SidebarSettingsOwnerProps,
@@ -54,6 +55,7 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
   return {
     startSession,
     toggleSidebar,
+    openSettings,
     regionOwner: () => {
       if (regionOwner === undefined) throw new Error('region owner not rendered')
       return regionOwner
@@ -85,6 +87,17 @@ describe('SidebarRoot shell', () => {
     expect(b.toggleSidebar).toHaveBeenCalledOnce()
   })
 
+  it('shows only implemented product navigation and opens the real Plugins section', () => {
+    const b = mountShell()
+    expect(screen.getByText('Coding tasks')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Plugins' }))
+    expect(b.openSettings).toHaveBeenCalledWith('plugins')
+    expect(screen.queryByText('Pull requests')).toBeNull()
+    expect(screen.queryByText('Sites')).toBeNull()
+    expect(screen.queryByText('Scheduled')).toBeNull()
+    expect(screen.queryByText('Planned')).toBeNull()
+  })
+
   it('hands the region its wide flag and clamps expandSidebar to the collapsed state', () => {
     const b = mountShell()
     expect(b.regionOwner().wide).toBe(true)
@@ -114,6 +127,8 @@ describe('SidebarRoot shell', () => {
   it('renders statically collapsed on a cold start (no crossfade classes)', () => {
     const b = mountShell({ collapsed: true })
     expect(b.regionOwner().wide).toBe(false)
-    expect(screen.getByRole('button', { name: 'Open sidebar' })).toBeTruthy()
+    const open = screen.getByRole('button', { name: 'Open sidebar' })
+    expect(open).toBeTruthy()
+    expect(open.querySelectorAll('svg')).toHaveLength(1)
   })
 })

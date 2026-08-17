@@ -42,19 +42,9 @@ function bootThemeScript(
     document.body.style.setProperty(name, dark ? modes.dark : modes.light)
   }
   if (backgroundImage === null) {
-    document.body.style.removeProperty('background-image')
-    document.body.style.removeProperty('background-size')
-    document.body.style.removeProperty('background-position')
-    document.body.style.removeProperty('background-attachment')
     document.body.style.removeProperty('--dsh-custom-skin-image')
+    document.body.removeAttribute('${BOOTSTRAP_BACKGROUND_ATTRIBUTE}')
   } else {
-    const overlay = dark
-      ? 'linear-gradient(rgba(6, 10, 18, 0.30), rgba(6, 10, 18, 0.50))'
-      : 'linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.28))'
-    document.body.style.backgroundImage = overlay + ', url("' + backgroundImage + '")'
-    document.body.style.backgroundSize = 'cover'
-    document.body.style.backgroundPosition = 'center'
-    document.body.style.backgroundAttachment = 'fixed'
     document.body.style.setProperty('--dsh-custom-skin-image', 'url("' + backgroundImage + '")')
     document.body.setAttribute('${BOOTSTRAP_BACKGROUND_ATTRIBUTE}', '')
   }

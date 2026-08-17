@@ -19,10 +19,8 @@ import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
   FishLogo,
-  IconChecklistOutline14,
   IconCodeOutline16,
   IconCordisPluginOutline14,
-  IconGlobeOutline14,
   IconNewChatOutline16, IconPanelLeftOutline16,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -50,6 +48,7 @@ export function SidebarRoot({
   width,
   startSession,
   toggleSidebar,
+  openSettings,
   t,
   renderSlot,
 }: SidebarRootComponentProps) {
@@ -151,8 +150,8 @@ export function SidebarRoot({
             </span>
           </button>
         )}
-        {/* Rail resting state is the whale mark; hovering swaps in the panel
-            icon (the expand affordance, figma sidebar-hover flow). */}
+        {/* Keep the panel glyph visible in both states: on the compact rail it
+            must read as an expand action without relying on hover discovery. */}
         <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
           <button
             type="button"
@@ -160,7 +159,6 @@ export function SidebarRoot({
             aria-label={collapsed ? t('toggle.open') : t('toggle.collapse')}
             onClick={() => { toggleSidebar() }}
           >
-            {!wide && <FishLogo className={css.railFish} size={24} />}
             {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
             <IconPanelLeftOutline16 className={css.panelIcon} size={wide ? 16 : 18} />
           </button>
@@ -180,35 +178,21 @@ export function SidebarRoot({
         </button>
       </Tooltip>
 
-      {/* Codex-style product navigation. These entries are deliberately
-          non-interactive until their owning product surfaces exist; showing
-          them as dead buttons would imply functionality we do not ship yet. */}
+      {/* Product navigation contains implemented destinations only. */}
       {wide && (
         <nav className={css.primaryNav} aria-label={t('nav.label')}>
           <div className={clsx(css.navItem, css.navItemActive)} aria-current="page">
             <IconCodeOutline16 className={css.navIcon} size={16} />
             <span>{t('nav.tasks')}</span>
           </div>
-          <div className={clsx(css.navItem, css.navItemPlanned)} title={t('nav.planned')}>
-            <IconCodeOutline16 className={css.navIcon} size={16} />
-            <span>{t('nav.pullRequests')}</span>
-            <span className={css.navBadge}>{t('nav.planned')}</span>
-          </div>
-          <div className={clsx(css.navItem, css.navItemPlanned)} title={t('nav.planned')}>
-            <IconGlobeOutline14 className={css.navIcon} size={16} />
-            <span>{t('nav.sites')}</span>
-            <span className={css.navBadge}>{t('nav.planned')}</span>
-          </div>
-          <div className={clsx(css.navItem, css.navItemPlanned)} title={t('nav.planned')}>
-            <IconChecklistOutline14 className={css.navIcon} size={16} />
-            <span>{t('nav.scheduled')}</span>
-            <span className={css.navBadge}>{t('nav.planned')}</span>
-          </div>
-          <div className={clsx(css.navItem, css.navItemPlanned)} title={t('nav.planned')}>
+          <button
+            type="button"
+            className={clsx(css.navItem, css.navItemButton)}
+            onClick={() => { openSettings('plugins') }}
+          >
             <IconCordisPluginOutline14 className={css.navIcon} size={16} />
             <span>{t('nav.plugins')}</span>
-            <span className={css.navBadge}>{t('nav.planned')}</span>
-          </div>
+          </button>
         </nav>
       )}
 

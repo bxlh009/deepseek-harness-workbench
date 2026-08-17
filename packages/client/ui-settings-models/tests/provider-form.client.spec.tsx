@@ -213,6 +213,25 @@ describe('model list editing', () => {
     })
   })
 
+  it('lets one declared model opt into image input without changing its siblings', async () => {
+    const { mutate } = await mountSection()
+    openEditor('openai')
+
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'vision-model' } })
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 2`), { target: { value: 'text-model' } })
+    expandModel(1)
+    fireEvent.click(screen.getByLabelText(`${en.modelVisionInput} 1`))
+    fireEvent.click(screen.getByText(en.apply))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalled() })
+    expect(firstMutate(mutate).ops[0]?.value).toEqual([
+      { id: 'vision-model', input: ['text', 'image'] },
+      { id: 'text-model' },
+    ])
+  })
+
   it('names a duplicate model id in the edit flow too', async () => {
     const { mutate } = await mountSection({
       providers: { openai: { baseURL: 'https://proxy.example/v1', models: [{ id: 'dup' }] } },
@@ -691,6 +710,36 @@ describe('hand-declared providers', () => {
       baseURL: 'http://127.0.0.1:11434/v1',
       api: 'openai-completions',
     })
+  })
+
+  it('prefills Groq cloud vision and requires a key before creating it', async () => {
+    const { mutate, set, onClose } = mountCard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Groq Vision' }))
+
+    expect(screen.getByLabelText<HTMLInputElement>(en.customRoute).value).toBe('groq-vision')
+    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value).toBe('https://api.groq.com/openai/v1')
+    expect(screen.getByLabelText<HTMLInputElement>(`${en.modelId} 1`).value).toBe('qwen/qwen3.6-27b')
+    expandModel(1)
+    expect(screen.getByLabelText<HTMLInputElement>(`${en.modelVisionInput} 1`).checked).toBe(true)
+    expect(buttonNamed(en.create).disabled).toBe(true)
+
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'gsk-test' } })
+    fireEvent.click(screen.getByText(en.create))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledWith(true) })
+    expect(firstMutate(mutate).ops[0]).toEqual({
+      op: 'set',
+      path: ['providers', 'groq-vision'],
+      value: {
+        displayName: 'Groq Vision',
+        apiKeyEnv: 'GROQ_VISION_API_KEY',
+        api: 'openai-completions',
+        baseURL: 'https://api.groq.com/openai/v1',
+        models: [{ id: 'qwen/qwen3.6-27b', name: 'Qwen 3.6 27B', input: ['text', 'image'] }],
+      },
+    })
+    expect(set).toHaveBeenCalledWith({ ref: 'GROQ_VISION_API_KEY', value: 'gsk-test' })
   })
 
   it('writes the whole profile and the key under the derived reference', async () => {

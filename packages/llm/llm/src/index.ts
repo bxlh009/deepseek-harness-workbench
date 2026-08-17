@@ -43,6 +43,14 @@ export { BlockAssembler } from './assembler.ts'
 export { callConfigEquals, deepFreeze, isAgentLoopRequest, markAgentLoopRequest } from './call-config.ts'
 export type { LlmCallConfig, LlmCallConfigAdapterDefaults } from './call-config.ts'
 
+/** One route/modality decision exposed to routing middleware and host preflights. */
+export interface LlmInputAdmission {
+  provider: string
+  model: string
+  modality: ModelModality
+  native: boolean
+}
+
 declare module '@deepseek-ai/cordis' {
   interface Context {
     llm: LlmRuntime
@@ -62,6 +70,13 @@ declare module '@deepseek-ai/cordis' {
      * @mode waterfall
      */
     'llm/stream'(this: LlmRuntime, options: GenerateOptions, next: () => AsyncIterable<StreamChunk>): AsyncIterable<StreamChunk>
+
+    /**
+     * Allow routing middleware to satisfy an input modality rejected by the native adapter.
+     * @param query Provider, model, modality, and the native adapter admission result.
+     * @mode waterfall
+     */
+    'llm/input-admission'(this: LlmRuntime, query: LlmInputAdmission, next: () => Promise<boolean>): Promise<boolean>
 
   }
 }
@@ -622,6 +637,25 @@ export class LlmRuntime extends Service {
     signal?: AbortSignal,
   ): Promise<LlmResolvedModelInfo> {
     return this.resolveModelInfoFor(this.registration(provider), model, signal)
+  }
+
+  /**
+   * Decide whether a route accepts one modality after routing middleware is considered.
+   * @param provider Provider identifier used for model discovery.
+   * @param model Model identifier used for model discovery.
+   * @param modality Input modality to admit.
+   * @param signal Optional cancellation signal for model discovery.
+   * @returns Whether the native adapter or routing middleware accepts the modality.
+   */
+  async acceptsInput(provider: string, model: string, modality: ModelModality, signal?: AbortSignal): Promise<boolean> {
+    const info = await this.resolveModelInfo(provider, model, signal)
+    const native = info.inputModalities === undefined || info.inputModalities.includes(modality)
+    return this.ctx.waterfall(
+      this,
+      'llm/input-admission',
+      { provider, model, modality, native },
+      () => Promise.resolve(native),
+    )
   }
 
   private async resolveModelInfoFor(

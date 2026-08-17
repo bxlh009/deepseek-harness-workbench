@@ -13,13 +13,6 @@ import { workspaceTitleOf } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConversationSlotProps } from '../contract/slots.ts'
 import css from './HeroShell.module.css'
 
-const IMAGE_THEME_TILES = [
-  { icon: '</>', label: 'hero.imageTile.explore' },
-  { icon: '✚', label: 'hero.imageTile.build' },
-  { icon: '✓', label: 'hero.imageTile.review' },
-  { icon: '⚒', label: 'hero.imageTile.fix' },
-] as const
-
 /** The owner's locale seat type, passed to hero chrome as a plain prop. */
 type HeroTranslate = ConversationSlotProps['t']
 
@@ -130,14 +123,6 @@ export function HeroShell({ t, children }: HeroShellProps) {
           </span>
           <span className={css.headlineText}>{t('hero.headline')}</span>
           <span className={css.previewBadge}>{t('hero.preview')}</span>
-        </div>
-        <div className={css.customTiles} data-image-skin-tiles="">
-          {IMAGE_THEME_TILES.map(tile => (
-            <div key={tile.label} className={css.customTile}>
-              <span className={css.customTileIcon} aria-hidden="true">{tile.icon}</span>
-              <span>{t(tile.label)}</span>
-            </div>
-          ))}
         </div>
         <div className={css.body} data-image-skin-hero-body="">
           {/* The resident composer (ConversationRoot's root-owned scrollport;

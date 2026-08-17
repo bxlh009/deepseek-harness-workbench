@@ -75,6 +75,7 @@ export function InputBar({
   const empty = draft.trim() === '' && attachments.length === 0
   const [preview, setPreview] = useState<ComposerAttachment | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const imagePickerRef = useRef<HTMLInputElement>(null)
   // Transient error banner (image-intake rejections and prompt failures): the
   // seq keys the Toast so an identical repeated message restarts the
   // hold-then-fade cycle instead of silently reusing the faded one.
@@ -732,6 +733,35 @@ export function InputBar({
         </div>
         <div className={css.row}>
           <div className={css.tools}>
+            <input
+              ref={imagePickerRef}
+              className={css.fileInput}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              multiple
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={(event) => {
+                intakeImages([...(event.currentTarget.files ?? [])])
+                event.currentTarget.value = ''
+              }}
+            />
+            <Tooltip label={t('input.addImage')} side="top" delayMs={500}>
+              <button
+                type="button"
+                className={css.add}
+                aria-label={t('input.addImage')}
+                disabled={locked || machineBusy || addImages === undefined}
+                onMouseDown={keepFocus}
+                onClick={() => { imagePickerRef.current?.click() }}
+              >
+                <svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden>
+                  <rect x="2" y="2.5" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
+                  <circle cx="5.25" cy="5.75" r="1.15" fill="currentColor" />
+                  <path d="M3.5 11l3-3 2.1 2.1 1.35-1.35L12.5 11.3" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </Tooltip>
             <Tooltip label={t('input.commands')} side="top" delayMs={500}>
               <button
                 type="button"

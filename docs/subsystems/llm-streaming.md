@@ -800,6 +800,16 @@ async listModels(provider: string): Promise<LlmModelInfo[]>
 async resolveModelInfo( provider: string, model: string, signal?: AbortSignal, ): Promise<LlmResolvedModelInfo>
 
 /**
+ * Decide whether a route accepts one modality after routing middleware is considered.
+ * @param provider Provider identifier used for model discovery.
+ * @param model Model identifier used for model discovery.
+ * @param modality Input modality to admit.
+ * @param signal Optional cancellation signal for model discovery.
+ * @returns Whether the native adapter or routing middleware accepts the modality.
+ */
+async acceptsInput(provider: string, model: string, modality: ModelModality, signal?: AbortSignal): Promise<boolean>
+
+/**
  * Validate a conversation call config against its exact model capability and
  * materialize adapter-configured defaults. Unsupported explicit efforts
  * reject before provider I/O; no clamping or aliasing is performed. This
@@ -835,7 +845,7 @@ async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<Prepared
 stream(options: GenerateOptions): AsyncIterable<StreamChunk>
 ```
 
-Source: [`packages/llm/llm/src/index.ts:284`](../../packages/llm/llm/src/index.ts)
+Source: [`packages/llm/llm/src/index.ts:299`](../../packages/llm/llm/src/index.ts)
 
 <a id="llm-events"></a>
 
@@ -862,6 +872,23 @@ The provider topology changed: an adapter registered or unregistered routes, or 
 
 Source: [`packages/llm/llm/src/types.ts:23`](../../packages/llm/llm/src/types.ts)
 
+<a id="llminput-admission--waterfall"></a>
+
+#### `llm/input-admission` — waterfall
+
+Allow routing middleware to satisfy an input modality rejected by the native adapter.
+
+```ts cordis-catalog
+/**
+ * Allow routing middleware to satisfy an input modality rejected by the native adapter.
+ * @param query Provider, model, modality, and the native adapter admission result.
+ * @mode waterfall
+ */
+'llm/input-admission'(this: LlmRuntime, query: LlmInputAdmission, next: () => Promise<boolean>): Promise<boolean>
+```
+
+Source: [`packages/llm/llm/src/index.ts:79`](../../packages/llm/llm/src/index.ts)
+
 <a id="llmstream--waterfall"></a>
 
 #### `llm/stream` — waterfall
@@ -884,5 +911,5 @@ Waterfall around every streaming model call (retry, replay, routing). Bound to t
 'llm/stream'(this: LlmRuntime, options: GenerateOptions, next: () => AsyncIterable<StreamChunk>): AsyncIterable<StreamChunk>
 ```
 
-Source: [`packages/llm/llm/src/index.ts:64`](../../packages/llm/llm/src/index.ts)
+Source: [`packages/llm/llm/src/index.ts:72`](../../packages/llm/llm/src/index.ts)
 <!-- END GENERATED cordis-surface -->

@@ -61,6 +61,23 @@ interface PkgMeta {
 /** Recovery instruction shared by grouped startup and steady-state bundle diagnostics. */
 const CLIENT_BUNDLE_BUILD_INSTRUCTION = 'run `pnpm run build` before launch'
 
+/** Resolve one plugin package from the profile, then the immutable packaged runtime. */
+export function resolvePackageJson(
+  spec: string,
+  profileRequire: ReturnType<typeof createRequire>,
+  runtimeRequire: ReturnType<typeof createRequire>,
+): string {
+  try {
+    return profileRequire.resolve(`${spec}/package.json`)
+  } catch (profileError) {
+    try {
+      return runtimeRequire.resolve(`${spec}/package.json`)
+    } catch {
+      throw profileError
+    }
+  }
+}
+
 /** Missing built client export, retained as structured data for activation-error grouping. */
 class MissingClientBundleError extends Error {
   constructor(
@@ -202,15 +219,16 @@ export class ClientModuleRegistry extends Service {
    */
   constructor(ctx: Context) {
     super(ctx, 'clientModules')
-    // Resolution anchor: the config tree's baseUrl (the cordis.yml directory,
-    // whose package declares every composed plugin as a dependency). The
-    // modules package's own URL would miss sibling packages under pnpm's
-    // isolated node_modules.
+    // Prefer the writable config tree so source installs keep resolving the
+    // profile's exact dependency set. Packaged desktop profiles intentionally
+    // contain no node_modules; there the application-owned runtime is the
+    // complete, immutable dependency graph and becomes the fallback anchor.
     if (ctx.baseUrl === undefined) {
       throw new Error('client-modules: ctx.baseUrl is unset — the node half needs the config-tree anchor to resolve plugin packages')
     }
-    const require = createRequire(ctx.baseUrl)
-    this.resolvePkgJson = spec => require.resolve(`${spec}/package.json`)
+    const profileRequire = createRequire(ctx.baseUrl)
+    const runtimeRequire = createRequire(import.meta.url)
+    this.resolvePkgJson = spec => resolvePackageJson(spec, profileRequire, runtimeRequire)
 
     // Subscribe before seeding so a fiber arriving mid-activation lands in the
     // same dirty set (Set idempotence makes the overlap harmless). An entry-less

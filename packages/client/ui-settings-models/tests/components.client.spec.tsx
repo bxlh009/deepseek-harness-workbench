@@ -6,7 +6,7 @@ import Schema from '@deepseek-ai/schemastery'
 import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
 import type { RpcResponse, SettingsNamespaceView } from '@deepseek-ai/dsh-api-remotes/client'
 import {
-  ModelsSection, needsSetup, providerCopy, providerTargetLabel, removeProviderProfile,
+  fusionProfilesUsingProvider, ModelsSection, needsSetup, providerCopy, providerTargetLabel, removeProviderProfile,
 } from '../src/client/ModelsSection.tsx'
 import type { ModelsSectionInjected, ModelsSectionProps } from '../src/client/ModelsSection.tsx'
 import { pathOps } from '../src/client/ProviderEditor.tsx'
@@ -114,8 +114,12 @@ function wireNamespaces(): SettingsNamespaceView[] {
     {
       ns: 'llm-pi-ai',
       schema: JSON.parse(JSON.stringify(PiAiConfig.toJSON())) as unknown,
-      value: { providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY', baseURL: 'https://proxy', headers: { 'X-Team': 'a' } }, zombie: {} } },
-      user: { providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY', baseURL: 'https://proxy', headers: { 'X-Team': 'a' } }, zombie: {} } },
+      value: {
+        providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY', baseURL: 'https://proxy', headers: { 'X-Team': 'a' } }, zombie: {} },
+      },
+      user: {
+        providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY', baseURL: 'https://proxy', headers: { 'X-Team': 'a' } }, zombie: {} },
+      },
       applies: 'live',
       secrets: [],
       revision: 0,
@@ -140,6 +144,7 @@ function scriptedFace(overrides: {
   mutate?: ReturnType<typeof vi.fn>
   set?: ReturnType<typeof vi.fn>
   unset?: ReturnType<typeof vi.fn>
+  namespaces?: SettingsNamespaceView[]
 } = {}) {
   const update = overrides.update ?? vi.fn(() => Promise.resolve(ok(wireNamespaces()[2])))
   const replace = overrides.replace ?? vi.fn(() => Promise.resolve(ok(wireNamespaces()[2])))
@@ -161,7 +166,11 @@ function scriptedFace(overrides: {
       models: vi.fn(() => Promise.resolve(ok({ groups: [], failures: [] }))),
     },
     settings: {
-      describe: vi.fn(() => Promise.resolve(ok({ writable: true, hasDocument: false, namespaces: wireNamespaces() }))),
+      describe: vi.fn(() => Promise.resolve(ok({
+        writable: true,
+        hasDocument: false,
+        namespaces: overrides.namespaces ?? wireNamespaces(),
+      }))),
       update,
       replace,
       mutate,
@@ -1234,6 +1243,30 @@ describe('ModelsSection', () => {
       t={t}
     />)
     await screen.findByText('DeepSeek')
+  })
+
+  it('blocks deleting a provider that a fusion profile still references before touching its key', async () => {
+    const fusion = {
+      ns: 'llm-fusion',
+      value: {
+        models: [{
+          id: 'openai-review',
+          name: 'OpenAI review',
+          candidates: [{ provider: 'openai', model: 'gpt-test' }],
+          synthesizer: { provider: 'openai', model: 'gpt-test' },
+        }],
+      },
+      revision: 1,
+    } as never
+    expect(fusionProfilesUsingProvider(fusion, 'openai')).toEqual(['OpenAI review (openai-review)'])
+    const { unset, mutate } = await mountSection({ namespaces: [...wireNamespaces(), fusion] })
+
+    fireEvent.click(screen.getByRole('button', { name: openaiCopy(en.removeProvider) }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: openaiCopy(en.deleteConfirm) }))
+
+    expect(await screen.findByText(en.deleteBlockedByFusion.replace('{models}', 'OpenAI review (openai-review)'))).toBeTruthy()
+    expect(unset).not.toHaveBeenCalled()
+    expect(mutate).not.toHaveBeenCalled()
   })
 
   it('removes by unsetting the profile path, never by rebuilding the section', async () => {

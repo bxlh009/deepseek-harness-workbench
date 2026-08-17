@@ -2,7 +2,7 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
-  'brand.name': '深寻工作台',
+  'brand.name': 'DeepSeek Harness 工作台',
   'brand.tagline': '中文编码代理',
   'session.new': '新会话',
   'session.new.label': '新建会话',

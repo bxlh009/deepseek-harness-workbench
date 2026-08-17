@@ -76,6 +76,8 @@ export type SidebarRootInjected = {
   startSession: (workspaceId?: WorkspaceId) => void
   /** Toggle the sidebar column through the layout service. */
   toggleSidebar: () => void
+  /** Open one implemented settings section from product navigation. */
+  openSettings: (sectionId: string) => void
 }
 
 /**

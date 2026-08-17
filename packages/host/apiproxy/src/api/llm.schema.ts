@@ -6,7 +6,7 @@
 import { z } from 'zod'
 import type { RequestPayload, ResponseValue } from './rpc-map.ts'
 import type { Wire } from './rpc.schema.ts'
-import type { ConfigurableProviderView, DiscoveredModelView } from './llm.ts'
+import type { ConfigurableProviderView, DiscoveredModelView, LlmArenaResult, LlmArenaRoute } from './llm.ts'
 import { modelCatalogFailureSchema, modelProviderGroupSchema } from './sessions.schema.ts'
 
 /** ConfigurableProviderView row of llm.providers. */
@@ -35,6 +35,37 @@ export const llmModelsValueSchema = z.object({
   groups: z.array(modelProviderGroupSchema),
   failures: z.array(modelCatalogFailureSchema),
 }) satisfies z.ZodType<Wire<ResponseValue<'llm.models'>>>
+
+/** Provider/model route accepted by llm.arena. */
+export const llmArenaRouteSchema = z.object({
+  provider: z.string().min(1).max(128),
+  model: z.string().min(1).max(256),
+}) satisfies z.ZodType<Wire<LlmArenaRoute>>
+
+/** llm.arena request payload. */
+export const llmArenaRequestSchema = z.object({
+  prompt: z.string().trim().min(1).max(16_000),
+  maxTokens: z.number().int().min(64).max(4_096).optional(),
+  timeoutMs: z.number().int().min(100).max(120_000).optional(),
+  routes: z.array(llmArenaRouteSchema).min(1).max(5).refine(
+    routes => new Set(routes.map(route => `${route.provider}\u0000${route.model}`)).size === routes.length,
+    'routes must be distinct',
+  ),
+}) satisfies z.ZodType<Wire<RequestPayload<'llm.arena'>>>
+
+/** One llm.arena result row. */
+export const llmArenaResultSchema = llmArenaRouteSchema.extend({
+  text: z.string(),
+  latencyMs: z.number().int().nonnegative(),
+  inputTokens: z.number().int().nonnegative().optional(),
+  outputTokens: z.number().int().nonnegative().optional(),
+  error: z.string().min(1).optional(),
+}) satisfies z.ZodType<Wire<LlmArenaResult>>
+
+/** llm.arena response value. */
+export const llmArenaValueSchema = z.object({
+  results: z.array(llmArenaResultSchema).min(1).max(5),
+}) satisfies z.ZodType<Wire<ResponseValue<'llm.arena'>>>
 
 /** DiscoveredModelView row of llm.discoverModels. */
 export const discoveredModelViewSchema = z.object({

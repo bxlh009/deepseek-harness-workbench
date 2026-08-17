@@ -1,0 +1,60 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'desktop-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Verify tag matches desktop version
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          $version = node -p "require('./apps/desktop/package.json').version"
+          if ('${{ github.ref_name }}' -ne "desktop-v$version") {
+            throw "Tag ${{ github.ref_name }} does not match desktop-v$version"
+          }
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build libraries and web application
+        run: pnpm run build
+
+      - name: Assemble archived desktop runtime
+        run: pnpm run desktop:package
+
+      - name: Test desktop updater and launcher
+        working-directory: apps/desktop
+        run: pnpm test
+
+      - name: Publish installer and update metadata
+        working-directory: apps/desktop
+        run: .\node_modules\.bin\electron-builder.CMD --win nsis --publish always

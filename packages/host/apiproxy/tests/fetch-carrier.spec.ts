@@ -278,6 +278,15 @@ function fakeApi(overrides: Partial<{ muxFrames: MuxFrame[]; hostFrames: HostFra
       async models(request) {
         return { rpcId: request.rpcId, result: { ok: true, value: { groups: [], failures: [] } } }
       },
+      async arena(request) {
+        return {
+          rpcId: request.rpcId,
+          result: {
+            ok: true,
+            value: { results: request.payload.routes.map(route => ({ ...route, text: 'answer', latencyMs: 1 })) },
+          },
+        }
+      },
       async discoverModels(request) {
         return { rpcId: request.rpcId, result: { ok: true, value: { models: [] } } }
       },
@@ -586,6 +595,21 @@ describe('unary round trip (handler ⇄ client, no network)', () => {
 
 describe('handler carrier-layer statuses', () => {
   const handler = toFetchHandler(fakeApi())
+
+  it('accepts one arena route so blind-comparison slots can settle independently', async () => {
+    const body = JSON.stringify({
+      type: 'client-request',
+      rpcId: 'arena-single',
+      method: 'llm.arena',
+      payload: { prompt: 'checkable prompt', routes: [{ provider: 'p1', model: 'm1' }] },
+    })
+    const response = await handler.fetch(new Request('http://x/api/llm.arena', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body,
+    }))
+    expect(response.status).toBe(200)
+    const parsed = await response.json() as { result: { ok: boolean; value?: { results: unknown[] } } }
+    expect(parsed.result).toMatchObject({ ok: true, value: { results: [{ provider: 'p1', model: 'm1' }] } })
+  })
 
   it('404s unknown paths and non-POST non-stream methods', async () => {
     expect((await handler.fetch(new Request('http://x/other', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }))).status).toBe(404)

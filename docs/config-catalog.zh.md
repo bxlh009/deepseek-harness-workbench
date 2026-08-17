@@ -893,6 +893,54 @@ export interface DeepSeekCatalogModel {
 
 来源：[`packages/llm/llm-deepseek/src/index.ts:62`](../packages/llm/llm-deepseek/src/index.ts)
 
+<a id="deepseek-aidsh-llm-fusion"></a>
+
+## `@deepseek-ai/dsh-llm-fusion`
+
+需要：`llm`
+
+```ts config-catalog
+/** Settings-driven fusion adapter configuration. */
+export interface Config {
+  /** Virtual models advertised when the list is non-empty. */
+  models?: FusionModelProfile[]
+  /** Provider of the optional global image preprocessor. */
+  globalVisionProvider?: string
+  /** Model of the optional global image preprocessor. */
+  globalVisionModel?: string
+  /** Explicit acknowledgement for the global image preprocessor. */
+  shareImagesWithGlobalVisionProvider?: boolean
+}
+
+/** One virtual model and the real routes that produce its response. */
+export interface FusionModelProfile {
+  /** Stable lowercase identifier advertised under the `fusion` provider. */
+  id: string
+  /** Human-readable name shown in model selectors. */
+  name: string
+  /** Two to four distinct routes invoked concurrently without tools. */
+  candidates: ModelRoute[]
+  /** Route that receives the candidate drafts and emits the final response. */
+  synthesizer: ModelRoute
+  /** Provider of the optional image-capable preprocessing route. */
+  visionProvider?: string
+  /** Model of the optional image-capable preprocessing route. */
+  visionModel?: string
+  /** Explicit acknowledgement that image bytes leave Harness for the selected route. */
+  shareImagesWithVisionProvider?: boolean
+}
+
+/** One concrete provider/model route used by a fusion profile. */
+export interface ModelRoute {
+  /** Registered provider route. */
+  provider: string
+  /** Provider-owned model identifier. */
+  model: string
+}
+```
+
+来源：[`packages/llm/llm-fusion/src/config.ts:33`](../packages/llm/llm-fusion/src/config.ts)
+
 <a id="deepseek-aidsh-llm-pi-ai"></a>
 
 ## `@deepseek-ai/dsh-llm-pi-ai`

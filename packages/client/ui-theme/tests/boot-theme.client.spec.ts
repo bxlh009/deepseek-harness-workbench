@@ -84,16 +84,15 @@ describe('theme boot index transform', () => {
     expect(html.startsWith('<main>loading</main><script>')).toBe(true)
   })
 
-  it('paints a persisted custom image background before the client plugin loads', () => {
+  it('publishes a persisted wallpaper before the client loads without owning page background geometry', () => {
     const custom = createCustomSkinFromPixels([{ r: 38, g: 105, b: 180 }], 'data:image/png;base64,AA==', '海边照片')
+    document.body.style.backgroundImage = 'linear-gradient(red, blue)'
+    document.body.style.backgroundSize = '12px 12px'
     mockSystemDark(false)
     executeBootstrap('light', '<html><body><div id="root"></div></body></html>', 'custom', custom)
     expect(document.body.getAttribute('data-ds-theme-bootstrap-background')).not.toBeNull()
-    expect(document.body.style.backgroundImage).toContain('data:image/png;base64,AA==')
-    expect(document.body.style.backgroundImage).toContain('0.12')
-    expect(document.body.style.backgroundImage).toContain('0.28')
-    expect(document.body.style.backgroundImage).not.toContain('0.72')
+    expect(document.body.style.backgroundImage).toBe('linear-gradient(red, blue)')
+    expect(document.body.style.backgroundSize).toBe('12px 12px')
     expect(document.body.style.getPropertyValue('--dsh-custom-skin-image')).toContain('data:image/png;base64,AA==')
-    expect(document.body.style.backgroundSize).toBe('cover')
   })
 })

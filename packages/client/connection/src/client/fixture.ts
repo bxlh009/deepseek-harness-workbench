@@ -2954,6 +2954,15 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
           { provider: 'acme-gateway', displayName: 'Acme Gateway', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'acme-gateway'], active: true, declared: true },
         ],
       }),
+      arena: request => Promise.resolve(ok(request, {
+        results: request.payload.routes.map((route, index) => ({
+          ...route,
+          text: `匿名回答 ${index + 1}：${request.payload.prompt}`,
+          latencyMs: 400 + index * 120,
+          inputTokens: 24,
+          outputTokens: 48 + index,
+        })),
+      })),
       models: request => ok(request, { groups: fixtureModelGroups(), failures: [] }),
       // The fixture endpoint is imaginary, so the interrogation answers the
       // catalog it already serves — enough for a surface to exercise adopting
@@ -3128,6 +3137,7 @@ export class FixtureApiClient extends AbstractApiClient {
       case 'credentials.unset': return this.api.credentials.unset(request)
       case 'llm.providers': return this.api.llm.providers(request)
       case 'llm.models': return this.api.llm.models(request)
+      case 'llm.arena': return this.api.llm.arena(request)
       case 'llm.discoverModels': return this.api.llm.discoverModels(request, signal)
     }
   }
