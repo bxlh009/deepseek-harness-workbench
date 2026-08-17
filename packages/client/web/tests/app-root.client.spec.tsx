@@ -33,7 +33,7 @@ function mount() {
 describe('AppRoot', () => {
   it('shows the loading page and never calls renderApp before settled', () => {
     const { queryByTestId, counts, getByText } = mount()
-    expect(getByText('DeepSeek Harness 工作台')).toBeTruthy()
+    expect(getByText('DeepSeek Harness Workbench')).toBeTruthy()
     expect(queryByTestId('real-ui')).toBeNull()
     expect(counts()).toBe(0)
   })
@@ -53,7 +53,7 @@ describe('AppRoot', () => {
       status.set('@deepseek-ai/dsh-client-ui-layout', 'failed')
       status.set('ok', 'active')
     })
-    expect(getByText('插件启动失败')).toBeTruthy()
+    expect(getByText('Plugin startup failed')).toBeTruthy()
     expect(getByText('@deepseek-ai/dsh-client-ui-layout')).toBeTruthy()
     expect(queryByTestId('real-ui')).toBeNull()
   })
@@ -61,7 +61,7 @@ describe('AppRoot', () => {
   it('renders the boot failure report even when no entry projected failed', () => {
     const { error, getByText, queryByTestId } = mount()
     act(() => { error.set('web boot: 1 entry did not activate\nx: pending (waiting for service: y)') })
-    expect(getByText('插件启动失败')).toBeTruthy()
+    expect(getByText('Plugin startup failed')).toBeTruthy()
     expect(getByText(/waiting for service/)).toBeTruthy()
     expect(queryByTestId('real-ui')).toBeNull()
   })

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './DesktopUpdateRow.module.css'
 
 type UpdateResult =
@@ -16,15 +17,16 @@ declare global {
   }
 }
 
-function resultText(result: UpdateResult | undefined): string {
-  if (result === undefined) return '从独立 GitHub Releases 获取桌面更新。'
-  if (result.status === 'development') return `开发模式 · 当前 ${result.currentVersion}`
-  if (result.status === 'up-to-date') return `已是最新版 ${result.currentVersion}`
-  if (result.status === 'available') return `发现新版本 ${result.version}，请在提示框中选择是否下载。`
-  return `检查失败：${result.message}`
+function resultText(t: TranslateNS<'settings'>, result: UpdateResult | undefined): string {
+  if (result === undefined) return t('update.source')
+  if (result.status === 'development') return t('update.development', { version: result.currentVersion })
+  if (result.status === 'up-to-date') return t('update.current', { version: result.currentVersion })
+  if (result.status === 'available') return t('update.available', { version: result.version })
+  return t('update.failed', { message: result.message })
 }
 
-export function DesktopUpdateRow() {
+/** Desktop update row copy follows the settings locale seat. */
+export function DesktopUpdateRow({ t }: { t: TranslateNS<'settings'> }) {
   const bridge = window.dshDesktop
   const checkForUpdates = bridge?.checkForUpdates
   const [checking, setChecking] = useState(false)
@@ -35,8 +37,8 @@ export function DesktopUpdateRow() {
   return (
     <div className={css.row}>
       <div className={css.rowText}>
-        <div className={css.title}>软件更新</div>
-        <div className={css.description} role="status">{resultText(result)}</div>
+        <div className={css.title}>{t('update.title')}</div>
+        <div className={css.description} role="status">{resultText(t, result)}</div>
       </div>
       <button
         type="button"
@@ -49,7 +51,7 @@ export function DesktopUpdateRow() {
             .finally(() => { setChecking(false) })
         }}
       >
-        {checking ? '检查中…' : '检查更新'}
+        {checking ? t('update.checking') : t('update.check')}
       </button>
     </div>
   )

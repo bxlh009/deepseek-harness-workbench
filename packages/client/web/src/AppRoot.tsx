@@ -39,17 +39,17 @@ export function AppRoot(props: AppRootProps) {
   return (
     <div className={css.boot}>
       <div className={css.card}>
-        <div className={css.wordmark}>DeepSeek Harness 工作台</div>
+        <div className={css.wordmark}>DeepSeek Harness Workbench</div>
         {!loud
           ? (
             <>
               <div className={css.spinner} />
-              <div className={css.hint}>正在启动中文编码工作台…</div>
+              <div className={css.hint}>Starting the local coding workbench…</div>
             </>
           )
           : (
             <div className={css.failed}>
-              <div className={css.failedTitle}>插件启动失败</div>
+              <div className={css.failedTitle}>Plugin startup failed</div>
               {failed.map(([id]) => <div key={id} className={css.failedItem}>{id}</div>)}
               {error !== undefined && <div className={css.failedItem}>{error}</div>}
             </div>

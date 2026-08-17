@@ -1,0 +1,16 @@
+title = "DeepSeek Harness Workbench secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Documented non-production fixture credentials"
+regexTarget = "match"
+regexes = [
+  '''sk-e2efixture1234567890''',
+  '''sk-fixture1234567890''',
+  '''sk-live-DO-NOT-LOG-abcdef123456''',
+  '''sk-0123456789''',
+  '''(?m)^[^:\r\n]+\.md: [0-9a-f]{40}$''',
+  '''(?m)^[^:\r\n]+\.zh\.md: [0-9a-f]{40}$''',
+]

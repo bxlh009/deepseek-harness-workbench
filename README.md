@@ -2,18 +2,18 @@
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness Workbench (`dsh`) is a local-first desktop coding agent for Chinese developers. It brings projects, conversations, planning, tool execution, and approvals into one workspace so users can delegate real software tasks through a Codex-like workflow.
+DeepSeek Harness Workbench (`dsh`) is a global, local-first desktop coding agent. It brings projects, conversations, planning, tool execution, and approvals into one workspace, provides English-first core surfaces with Chinese support, and connects to DeepSeek and other compatible model providers.
 
 ## Upstream and project relationship
 
-DeepSeek Harness Workbench is an independent derivative of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), the open-source agent harness published by DeepSeek. DeepSeek Harness supplies the core runtime, sessions, tools, and plugin architecture; this project adds an independent desktop product layer, Chinese user experience, provider configuration, task workflow, review surfaces, and local distribution.
+DeepSeek Harness Workbench is an independent derivative of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), the open-source agent harness published by DeepSeek. DeepSeek Harness supplies the core runtime, sessions, tools, and plugin architecture; this project adds an independent desktop product layer, bilingual user experience, multi-provider configuration, task workflow, review surfaces, and local distribution.
 
 DeepSeek Harness Workbench is not an official DeepSeek product and does not represent DeepSeek. The project preserves the upstream MIT license, copyright notices, third-party notices, and a clear record of downstream modifications. It does not claim the DeepSeek Harness implementation as original work.
 
 The current product core includes:
 
 - Project workspaces connected to real local code directories, sessions, and history.
-- Coding conversations that use DeepSeek models to inspect code, edit files, and run commands.
+- Coding conversations that use configured model providers to inspect code, edit files, and run commands.
 - Plan mode for reviewing an execution plan before mutating work begins.
 - Explicit approvals and permissions for risky actions.
 
@@ -29,7 +29,7 @@ DeepSeek Harness Workbench is currently in _developer preview_ and is iterating 
 | --- | --- |
 | Harness coding runtime, sessions, tools, planning, and approvals | Implemented by the upstream DeepSeek Harness foundation |
 | Windows Electron shell and bundled local runtime | Implemented and locally packaged |
-| Chinese desktop branding and core interface localization | Implemented locally |
+| English-first core desktop surfaces with Chinese browser-language selection | Implemented locally; remaining package-level copy is being migrated |
 | Theme skins and custom image skin | Implemented with related component tests |
 | Provider configuration, fusion models, plugin inventory, and vision input routing | Implemented as downstream workbench features |
 | Automatic update prompts and GitHub Release delivery | Implemented for Windows NSIS installs |
@@ -77,7 +77,7 @@ pnpm dsh web
 
 ## Support and upstream
 
-- Report ShenXun Workbench product problems in this project's GitHub repository after it is published.
+- Report DeepSeek Harness Workbench product problems in this project's GitHub repository.
 - Report reproducible upstream runtime defects to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) only after confirming they are not caused by downstream changes.
 - See the upstream repository for the original DeepSeek Harness documentation and community channels.
 

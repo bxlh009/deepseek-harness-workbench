@@ -1,4 +1,5 @@
 import updaterPackage from 'electron-updater'
+import { updateCopy } from './update-copy.mjs'
 
 const { autoUpdater } = updaterPackage
 const INITIAL_UPDATE_CHECK_DELAY_MS = 15_000
@@ -25,6 +26,7 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow }) {
   // choice. A background check must never silently replace their application.
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = true
+  const copy = updateCopy(app.getLocale())
   let updatePromptOpen = false
 
   autoUpdater.on('update-available', (info) => {
@@ -32,10 +34,10 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow }) {
     updatePromptOpen = true
     void messageBox(dialog, getWindow, {
       type: 'info',
-      title: '发现新版本',
-      message: `DeepSeek Harness 工作台 ${info.version} 可以更新`,
-      detail: '由你决定是否下载。更新会覆盖程序文件，但不会删除模型、API 密钥、会话和皮肤配置。',
-      buttons: ['下载并安装', '稍后'],
+      title: copy.availableTitle,
+      message: copy.availableMessage(info.version),
+      detail: copy.availableDetail,
+      buttons: [copy.downloadButton, copy.laterButton],
       defaultId: 0,
       cancelId: 1,
     }).then(async ({ response }) => {
@@ -46,9 +48,9 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow }) {
         console.error('[desktop-updater] download failed', error)
         await messageBox(dialog, getWindow, {
           type: 'error',
-          title: '更新下载失败',
+          title: copy.downloadFailedTitle,
           message: errorMessage(error),
-          buttons: ['知道了'],
+          buttons: [copy.acknowledgeButton],
         })
       }
     }).finally(() => {
@@ -59,10 +61,10 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow }) {
   autoUpdater.on('update-downloaded', (info) => {
     void messageBox(dialog, getWindow, {
       type: 'info',
-      title: '更新已下载',
-      message: `DeepSeek Harness 工作台 ${info.version} 已准备好`,
-      detail: '现在重启即可安装更新。',
-      buttons: ['重启并安装', '稍后'],
+      title: copy.downloadedTitle,
+      message: copy.downloadedMessage(info.version),
+      detail: copy.downloadedDetail,
+      buttons: [copy.restartButton, copy.laterButton],
       defaultId: 0,
       cancelId: 1,
     }).then(({ response }) => {

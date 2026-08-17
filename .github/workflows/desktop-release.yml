@@ -55,6 +55,33 @@ jobs:
         working-directory: apps/desktop
         run: pnpm test
 
-      - name: Publish installer and update metadata
+      - name: Build installer and update metadata
         working-directory: apps/desktop
-        run: .\node_modules\.bin\electron-builder.CMD --win nsis --publish always
+        run: .\node_modules\.bin\electron-builder.CMD --win nsis --publish never
+
+      - name: Publish one deterministic GitHub Release
+        shell: pwsh
+        run: |
+          $version = node -p "require('./apps/desktop/package.json').version"
+          $releaseTag = "v$version"
+          $artifactRoot = 'dist/desktop/artifacts'
+          $artifacts = @(
+            "$artifactRoot/DeepSeek-Harness-Workbench-$version-x64-setup.exe",
+            "$artifactRoot/DeepSeek-Harness-Workbench-$version-x64-setup.exe.blockmap",
+            "$artifactRoot/latest.yml"
+          )
+          foreach ($artifact in $artifacts) {
+            if (-not (Test-Path -LiteralPath $artifact)) {
+              throw "Missing release artifact: $artifact"
+            }
+          }
+          if (gh release view $releaseTag --repo '${{ github.repository }}' 2>$null) {
+            gh release upload $releaseTag $artifacts --clobber --repo '${{ github.repository }}'
+          } else {
+            gh release create $releaseTag $artifacts `
+              --repo '${{ github.repository }}' `
+              --target '${{ github.sha }}' `
+              --title "DeepSeek Harness Workbench $version" `
+              --notes "Global, local-first desktop coding agent built on the open-source DeepSeek Harness. This release adds English-first core surfaces with Chinese support, multiple model providers, local workspaces, plugins, approvals, and user-controlled in-app updates." `
+              --latest
+          }

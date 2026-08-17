@@ -37,23 +37,24 @@ describe('LocaleRuntime', () => {
     vi.unstubAllGlobals()
   })
 
-  it('translates through the active-locale -> zh -> key chain', () => {
+  it('translates through the active-locale -> English -> key chain', () => {
     const { svc } = make()
     svc.register('ns', 'zh', { hello: '你好', onlyZh: '仅中文' })
-    svc.register('ns', 'en', { hello: 'Hello' })
+    svc.register('ns', 'en', { hello: 'Hello', onlyEn: 'English fallback' })
     const t = svc.bind('ns')
     expect(svc.getLocale().active).toBe('zh')
     expect(t('hello')).toBe('你好')
+    expect(t('onlyEn')).toBe('English fallback')
     svc.setLocale('en')
     expect(t('hello')).toBe('Hello')
-    expect(t('onlyZh')).toBe('仅中文')
+    expect(t('onlyZh')).toBe('onlyZh')
     expect(t('missing.key')).toBe('missing.key')
   })
 
   it('falls through to the common vocabulary after the namespace misses (production keys)', () => {
     const { svc } = make()
     // The shipped common pair is registered by apply; the bench registers it
-    // directly to pin the production chain: ns -> common -> zh -> key.
+    // directly to pin the production chain: ns -> common -> en -> key.
     svc.register('common', 'zh', { retry: '重试' })
     svc.register('common', 'en', { retry: 'Retry' })
     svc.register('ns', 'zh', { own: '自有' })
@@ -61,7 +62,7 @@ describe('LocaleRuntime', () => {
     expect(t('retry')).toBe('重试')
     svc.setLocale('en')
     expect(t('retry')).toBe('Retry')
-    expect(t('own')).toBe('自有')
+    expect(t('own')).toBe('own')
     // common itself must not recurse: a miss inside common echoes the key.
     // (Wide-string ns hits the untyped bind overload — the typed one rejects
     // unknown keys at compile time, which is the point of the typed registry contract.)
@@ -195,8 +196,10 @@ describe('LocaleRuntime', () => {
   it('opens provisionally in the browser language, matching regional variants on their primary subtag', () => {
     stubLanguages('en-GB', 'zh-CN')
     expect(make().svc.getLocale().active).toBe('en')
+    expect(document.documentElement.lang).toBe('en')
     stubLanguages('zh-Hant-TW')
     expect(make().svc.getLocale().active).toBe('zh')
+    expect(document.documentElement.lang).toBe('zh-CN')
     // An unshipped language walks the list to the first one this app ships.
     stubLanguages('fr-FR', 'en-US')
     expect(make().svc.getLocale().active).toBe('en')
@@ -206,10 +209,10 @@ describe('LocaleRuntime', () => {
     expect(make().svc.getLocale().active).toBe('en')
     vi.stubGlobal('navigator', { language: 'en-US' })
     expect(make().svc.getLocale().active).toBe('en')
-    // No shipped language anywhere in the browser's preferences: zh remains
-    // the product default rather than an arbitrary near-match.
+    // No shipped language anywhere in the browser's preferences: English is
+    // the global product default rather than an arbitrary near-match.
     stubLanguages('fr-FR', 'de')
-    expect(make().svc.getLocale().active).toBe('zh')
+    expect(make().svc.getLocale().active).toBe('en')
   })
 
   it('runs outside a browser (node boots): the fallback decides and the machine language does not', () => {
@@ -218,7 +221,7 @@ describe('LocaleRuntime', () => {
     // reach the resolution at all.
     stubLanguages('en-US')
     const { svc } = make()
-    expect(svc.getLocale().active).toBe('zh')
+    expect(svc.getLocale().active).toBe('en')
     svc.setLocale('en')
     expect(svc.getLocale().active).toBe('en')
   })

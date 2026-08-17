@@ -111,12 +111,12 @@ exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsul
             <span
               class="brandName"
             >
-              ShenXun Workbench
+              DeepSeek Harness Workbench
             </span>
             <span
               class="brandTagline"
             >
-              Chinese coding agent
+              Local-first coding agent
             </span>
           </span>
         </span>
@@ -268,7 +268,7 @@ exports[`sidebar shell snapshots > renders the expanded column in the default lo
             <span
               class="brandTagline"
             >
-              中文编码代理
+              本地优先编码代理
             </span>
           </span>
         </span>

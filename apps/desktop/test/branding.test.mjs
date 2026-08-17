@@ -9,13 +9,15 @@ const DESKTOP_ROOT = fileURLToPath(new URL('..', import.meta.url))
 test('desktop package uses the DeepSeek Harness Workbench brand and icon', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
 
-  assert.equal(packageJson.build.productName, 'DeepSeek Harness 工作台')
-  assert.equal(packageJson.build.nsis.shortcutName, 'DeepSeek Harness 工作台')
+  assert.equal(packageJson.description, 'Global, local-first, multi-provider coding agent desktop workbench built on DeepSeek Harness')
+  assert.equal(packageJson.version, '0.1.0-rc.7')
+  assert.equal(packageJson.build.productName, 'DeepSeek Harness Workbench')
+  assert.equal(packageJson.build.nsis.shortcutName, 'DeepSeek Harness Workbench')
   assert.equal(packageJson.build.win.icon, 'build/deepseek-icon.png')
   assert.match(packageJson.build.win.artifactName, /^DeepSeek-Harness-Workbench-/)
 
   const main = await readFile(new URL('../src/main.mjs', import.meta.url), 'utf8')
-  assert.match(main, /const PRODUCT_NAME = 'DeepSeek Harness 工作台'/)
+  assert.match(main, /const PRODUCT_NAME = 'DeepSeek Harness Workbench'/)
 
   const icon = await stat(join(DESKTOP_ROOT, 'build', 'deepseek-icon.png'))
   assert.ok(icon.size > 1_000, 'desktop icon should be a real rendered image')
@@ -45,7 +47,7 @@ test('desktop package exposes an in-app updater backed by the independent releas
   assert.match(updater, /downloadUpdate\(\)/)
   assert.match(updater, /setTimeout/)
   assert.match(updater, /setInterval/)
-  assert.match(updater, /下载并安装/)
+  assert.match(updater, /updateCopy\(app\.getLocale\(\)\)/)
 })
 
 test('desktop releases publish updater metadata and installer artifacts from version tags', async () => {
@@ -54,7 +56,10 @@ test('desktop releases publish updater metadata and installer artifacts from ver
   assert.match(workflow, /tags:/)
   assert.match(workflow, /desktop-v\*/)
   assert.match(workflow, /desktop:package/)
-  assert.match(workflow, /electron-builder\.CMD --win nsis --publish always/)
+  assert.match(workflow, /electron-builder\.CMD --win nsis --publish never/)
+  assert.match(workflow, /gh release create/)
+  assert.match(workflow, /--latest/)
+  assert.doesNotMatch(workflow, /--publish always/)
   assert.match(workflow, /GH_TOKEN: \$\{\{ secrets\.GITHUB_TOKEN \}\}/)
 })
 

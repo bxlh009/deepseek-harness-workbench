@@ -6,7 +6,7 @@ import { registerDesktopUpdater } from './updater.mjs'
 import { createUtilityProcessSpawner } from './utility-process-spawner.mjs'
 
 const DESKTOP_DIR = fileURLToPath(new URL('.', import.meta.url))
-const PRODUCT_NAME = 'DeepSeek Harness 工作台'
+const PRODUCT_NAME = 'DeepSeek Harness Workbench'
 const PRODUCT_ICON = join(DESKTOP_DIR, '..', 'build', 'deepseek-icon.png')
 let mainWindow
 let hostSupervisor
@@ -99,7 +99,7 @@ async function start() {
     await createMainWindow()
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    dialog.showErrorBox(`${PRODUCT_NAME}启动失败`, message)
+    dialog.showErrorBox(`${PRODUCT_NAME} failed to start`, message)
     app.quit()
   }
 }

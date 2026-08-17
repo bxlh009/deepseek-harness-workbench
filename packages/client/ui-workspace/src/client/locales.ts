@@ -78,7 +78,7 @@ export const en = {
   'group.ungrouped': 'Ungrouped',
   'session.new': 'New Session',
   'section.workspaces': 'Projects',
-  'section.sessions': 'Recent',
+  'section.sessions': 'Sessions',
   'viewOptions.label': 'View options',
   'groupBy.label': 'Group by',
   'groupBy.workspace': 'WorkSpace',

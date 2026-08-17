@@ -2,18 +2,18 @@
 
 [English](README.md) | 中文
 
-DeepSeek Harness 工作台（`dsh`）是面向中文开发者的本地优先编码代理桌面应用。它把项目、对话、计划、工具执行和审批放进一个工作区，让用户通过类似 Codex 的工作流交给代理完成真实的软件任务。
+DeepSeek Harness Workbench（`dsh`）是一款面向全球用户的本地优先编码代理桌面应用。它把项目、对话、计划、工具执行和审批放进一个工作区，核心界面默认使用英语并保留中文支持，可连接 DeepSeek 及其他兼容模型提供商。
 
 ## 上游来源与项目关系
 
-DeepSeek Harness 工作台是基于 DeepSeek 官方开源项目 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 二次开发的独立项目。DeepSeek Harness 提供核心运行时、会话、工具和插件架构；本项目在此基础上增加独立桌面产品层、中文用户体验、模型配置、任务工作流、审查界面和本地分发。
+DeepSeek Harness Workbench 是基于 DeepSeek 官方开源项目 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 二次开发的独立项目。DeepSeek Harness 提供核心运行时、会话、工具和插件架构；本项目在此基础上增加独立桌面产品层、中英文用户体验、多提供商模型配置、任务工作流、审查界面和本地分发。
 
 DeepSeek Harness 工作台不是 DeepSeek 官方产品，也不代表 DeepSeek 官方立场。本项目保留上游 MIT 许可证、版权声明、第三方声明和清晰的下游修改记录，不会把 DeepSeek Harness 的实现描述为自身原创。
 
 当前版本的产品核心是：
 
 - 项目工作区：连接本地代码目录，保留真实会话与历史。
-- 编码对话：通过 DeepSeek 模型分析代码、修改文件、运行命令。
+- 编码对话：通过已配置的模型提供商分析代码、修改文件、运行命令。
 - 计划模式：先审阅执行计划，再进入实际操作。
 - 审批与权限：危险操作仍经过明确确认，避免把“能执行”误当成“应该执行”。
 
@@ -29,7 +29,7 @@ DeepSeek Harness 工作台目前处于 _开发者预览_ 阶段，正在快速�
 | --- | --- |
 | Harness 编码运行时、会话、工具、计划与审批 | 由上游 DeepSeek Harness 基础能力实现 |
 | Windows Electron 桌面壳与内置本地运行时 | 已实现并完成本地打包 |
-| 中文桌面品牌与核心界面本地化 | 已在本地实现 |
+| 核心桌面界面默认英语，并根据浏览器语言选择中文 | 已在本地实现；其余包级文案仍在迁移 |
 | 主题皮肤与自定义图片皮肤 | 已实现并通过相关组件测试 |
 | 模型提供商、融合模型、插件清单与视觉输入路由 | 已作为下游工作台功能实现 |
 | 自动更新提示与 GitHub Release 分发 | 已面向 Windows NSIS 安装版实现 |
@@ -77,7 +77,7 @@ pnpm dsh web
 
 ## 支持与上游
 
-- DeepSeek Harness 工作台发布后，产品问题统一提交到本项目 GitHub 仓库。
+- DeepSeek Harness Workbench 的产品问题统一提交到本项目 GitHub 仓库。
 - 只有确认不是下游修改引起的、可独立复现的运行时缺陷，才提交给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。
 - 原始 DeepSeek Harness 文档和社区渠道以其上游仓库为准。
 

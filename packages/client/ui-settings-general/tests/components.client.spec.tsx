@@ -4,13 +4,17 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
 import type { GeneralSectionComponentProps } from '../src/client/GeneralSection.tsx'
 import { GeneralSection } from '../src/client/GeneralSection.tsx'
+import { DesktopUpdateRow } from '../src/client/DesktopUpdateRow.tsx'
 import { CloseLabel, HeaderContent, TriggerContent } from '../src/client/chrome.tsx'
 import type { TriggerContentProps } from '../src/client/chrome.tsx'
 import { SettingsDocumentAction } from '../src/client/SettingsDocumentAction.tsx'
 import { SettingsDocumentStore } from '../src/client/settings-document-store.ts'
 import { en } from '../src/client/locales.ts'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  delete window.dshDesktop
+})
 
 // The seat's key domain is settings ∪ common; the stub answers from the
 // package dictionary and falls back to the key like the real chain.
@@ -46,7 +50,7 @@ describe('GeneralSection', () => {
     const renderSlot = vi.fn(
       ((key: string) => <div data-testid={`slot-${key}`} />) as GeneralSectionComponentProps['renderSlot'],
     )
-    const props: GeneralSectionComponentProps = { ...kit, renderSlot, close: vi.fn() }
+    const props: GeneralSectionComponentProps = { ...kit, renderSlot, close: vi.fn(), t }
     const view = render(<GeneralSection {...props} />)
     return { view, renderSlot }
   }
@@ -55,6 +59,19 @@ describe('GeneralSection', () => {
     const { renderSlot } = mount()
     expect(renderSlot).toHaveBeenCalledWith('settings.general.item', {})
     expect(screen.getByTestId('slot-settings.general.item')).toBeTruthy()
+  })
+})
+
+describe('DesktopUpdateRow', () => {
+  it('renders global English update copy through the settings locale seat', () => {
+    window.dshDesktop = {
+      packaged: true,
+      checkForUpdates: vi.fn(() => Promise.resolve({ status: 'up-to-date' as const, currentVersion: '0.1.0' })),
+    }
+    render(<DesktopUpdateRow t={t} />)
+    expect(screen.getByText('Software update')).toBeTruthy()
+    expect(screen.getByText('Check for updates')).toBeTruthy()
+    expect(screen.getByText('Get desktop updates from the independent GitHub Releases channel.')).toBeTruthy()
   })
 })
 

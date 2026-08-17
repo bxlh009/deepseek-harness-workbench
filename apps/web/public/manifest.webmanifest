@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "DeepSeek Harness 工作台",
-  "short_name": "深寻",
+  "name": "DeepSeek Harness Workbench",
+  "short_name": "DSH Workbench",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

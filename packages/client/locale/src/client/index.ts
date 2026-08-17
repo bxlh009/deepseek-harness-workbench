@@ -87,7 +87,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Fallback locale consulted after the active locale misses (also the last-resort initial locale). */
-export const FALLBACK_LOCALE: LocaleId = 'zh'
+export const FALLBACK_LOCALE: LocaleId = 'en'
 
 /** Shared namespace for shell-level texts. */
 export const COMMON_NS = 'common'
@@ -101,10 +101,15 @@ const LOCALES: readonly LocaleDefinition[] = Object.freeze([
   { id: 'en', label: 'English' },
 ])
 
+function applyDocumentLanguage(locale: LocaleId): void {
+  if (typeof document === 'undefined') return
+  document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en'
+}
+
 /**
  * Dictionary registry plus locale preference. Lookup chain per key: the
- * entry's namespace in the active locale -> that namespace's zh fallback ->
- * the shared common namespace (active, then zh) -> the key itself (missing
+ * entry's namespace in the active locale -> that namespace's English fallback ->
+ * the shared common namespace (active, then English) -> the key itself (missing
  * text stays visible, fail loud in the UI rather than blank). Reads go
  * through {@link getLocale}; writes only through {@link setLocale};
  * continuous sync through the `locale/change` event, or through the
@@ -132,6 +137,7 @@ export class LocaleRuntime {
     this.host = host
     this.provisional = resolveInitialLocale()
     this.snapshot = Object.freeze({ active: this.provisional, locales: LOCALES, revision: 0 })
+    applyDocumentLanguage(this.provisional)
     if (host !== undefined) {
       ctx.effect(() => host.subscribe(() => { this.adopt(host) }), 'locale: settings scope adoption')
       this.adopt(host)
@@ -299,6 +305,7 @@ export class LocaleRuntime {
       locales: this.snapshot.locales,
       revision: this.snapshot.revision + 1,
     })
+    applyDocumentLanguage(active)
     if (localeChanged) this.ctx.emit('locale/change', this.snapshot)
     for (const fn of [...this.listeners]) {
       try {

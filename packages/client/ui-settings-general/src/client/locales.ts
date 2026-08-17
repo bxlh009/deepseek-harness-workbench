@@ -8,6 +8,14 @@ export const zh = {
   'openDocument': '打开配置文件',
   'openDocument.error': '无法打开配置文件',
   'general.nav': '通用设置',
+  'update.title': '软件更新',
+  'update.source': '从独立 GitHub Releases 获取桌面更新。',
+  'update.development': '开发模式 · 当前 {version}',
+  'update.current': '已是最新版 {version}',
+  'update.available': '发现新版本 {version}，请在提示框中选择是否下载。',
+  'update.failed': '检查失败：{message}',
+  'update.checking': '检查中…',
+  'update.check': '检查更新',
 } satisfies Record<string, string>
 
 /** The settings namespace key union. */
@@ -21,4 +29,12 @@ export const en = {
   'openDocument': 'Open configuration file',
   'openDocument.error': 'Could not open configuration file',
   'general.nav': 'General',
+  'update.title': 'Software update',
+  'update.source': 'Get desktop updates from the independent GitHub Releases channel.',
+  'update.development': 'Development mode · current {version}',
+  'update.current': 'Up to date · {version}',
+  'update.available': 'Version {version} is available. Choose whether to download it in the update prompt.',
+  'update.failed': 'Update check failed: {message}',
+  'update.checking': 'Checking…',
+  'update.check': 'Check for updates',
 } satisfies Record<SettingsKey, string>
