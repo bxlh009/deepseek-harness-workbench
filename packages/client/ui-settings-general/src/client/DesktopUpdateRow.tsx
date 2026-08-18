@@ -1,24 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import './desktop-update.ts'
+import type { DesktopUpdateStatus } from './desktop-update.ts'
 import css from './DesktopUpdateRow.module.css'
 
-type UpdateResult =
-  | { status: 'development'; currentVersion: string }
-  | { status: 'up-to-date'; currentVersion: string }
-  | { status: 'available'; currentVersion: string; version: string }
-  | { status: 'error'; currentVersion: string; message: string }
-
-declare global {
-  interface Window {
-    dshDesktop?: {
-      packaged: boolean
-      checkForUpdates?: () => Promise<UpdateResult>
-    }
-  }
-}
-
-function resultText(t: TranslateNS<'settings'>, result: UpdateResult | undefined): string {
+function resultText(t: TranslateNS<'settings'>, result: DesktopUpdateStatus | undefined): string {
   if (result === undefined) return t('update.source')
+  if (result.status === 'idle') return t('update.source')
   if (result.status === 'development') return t('update.development', { version: result.currentVersion })
   if (result.status === 'up-to-date') return t('update.current', { version: result.currentVersion })
   if (result.status === 'available') return t('update.available', { version: result.version })
@@ -29,29 +17,61 @@ function resultText(t: TranslateNS<'settings'>, result: UpdateResult | undefined
 export function DesktopUpdateRow({ t }: { t: TranslateNS<'settings'> }) {
   const bridge = window.dshDesktop
   const checkForUpdates = bridge?.checkForUpdates
-  const [checking, setChecking] = useState(false)
-  const [result, setResult] = useState<UpdateResult>()
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<DesktopUpdateStatus>()
+
+  useEffect(() => {
+    let mounted = true
+    let eventObserved = false
+    const accept = (status: DesktopUpdateStatus) => { if (mounted) setResult(status) }
+    const unsubscribe = bridge?.onUpdateStatus?.((status) => {
+      eventObserved = true
+      accept(status)
+    })
+    void bridge?.getUpdateStatus?.().then((status) => {
+      if (!eventObserved) accept(status)
+    }).catch(() => {})
+    return () => { mounted = false; unsubscribe?.() }
+  }, [bridge])
 
   if (bridge?.packaged !== true || checkForUpdates === undefined) return null
 
+  const unread = result?.status === 'available' && result.unread
+  const acknowledge = () => {
+    setResult(current => current?.status === 'available' ? { ...current, unread: false } : current)
+    void bridge.acknowledgeUpdate?.().then(setResult).catch(() => {})
+  }
+  const available = result?.status === 'available'
+
   return (
     <div className={css.row}>
-      <div className={css.rowText}>
-        <div className={css.title}>{t('update.title')}</div>
+      <button
+        type="button"
+        className={css.rowText}
+        data-update-unread={unread || undefined}
+        onClick={acknowledge}
+      >
+        <div className={css.title}>
+          {t('update.title')}
+          {unread && <span className={css.updateDot} aria-hidden="true" />}
+        </div>
         <div className={css.description} role="status">{resultText(t, result)}</div>
-      </div>
+      </button>
       <button
         type="button"
         className={css.button}
-        disabled={checking}
+        disabled={busy}
         onClick={() => {
-          setChecking(true)
-          void checkForUpdates()
+          setBusy(true)
+          const operation = available && bridge.downloadUpdate !== undefined
+            ? bridge.downloadUpdate()
+            : checkForUpdates()
+          void operation
             .then(setResult)
-            .finally(() => { setChecking(false) })
+            .finally(() => { setBusy(false) })
         }}
       >
-        {checking ? t('update.checking') : t('update.check')}
+        {busy ? t('update.checking') : available ? t('update.download') : t('update.check')}
       </button>
     </div>
   )

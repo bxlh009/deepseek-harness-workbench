@@ -6,6 +6,7 @@
 
 /* Trigger row: match the other wide sidebar controls' compact vertical rhythm. */
 .trigger {
+  position: relative;
   flex: none;
   display: flex;
   align-items: center;
@@ -24,6 +25,23 @@
   font-family: inherit;
   font-size: 14px;
   line-height: 22px;
+}
+
+.updateDot {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-error-primary);
+  box-shadow: 0 0 0 2px var(--dsw-alias-bg-layer-1);
+  pointer-events: none;
+}
+
+.trigger.rail .updateDot {
+  top: 2px;
+  right: 2px;
 }
 
 .trigger:hover {

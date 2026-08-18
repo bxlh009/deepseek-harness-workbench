@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useEffect, useState } from 'react'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { SettingsRootComponentProps } from '../src/client/shell-contract.ts'
 import { SettingsRoot } from '../src/client/SettingsRoot.tsx'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  Reflect.deleteProperty(window, 'dshDesktop')
+})
 
 type Row = { id: string; order: number; label: string }
 type Step = { id: string; order: number }
@@ -93,6 +96,37 @@ function openPanel() {
 }
 
 describe('SettingsRoot trigger', () => {
+  it('shows only unread update statuses and opening Settings does not clear the dot', async () => {
+    let publishStatus: ((status: unknown) => void) | undefined
+    Object.defineProperty(window, 'dshDesktop', {
+      configurable: true,
+      value: {
+        packaged: true,
+        getUpdateStatus: vi.fn().mockResolvedValue({
+          status: 'available', currentVersion: '0.1.0-rc.9', version: '0.1.0-rc.10', unread: true,
+        }),
+        onUpdateStatus: vi.fn((listener: (status: unknown) => void) => {
+          publishStatus = listener
+          return () => { publishStatus = undefined }
+        }),
+      },
+    })
+
+    mount()
+    const trigger = screen.getByRole('button', { name: 'Settings' })
+    await waitFor(() => { expect(trigger.getAttribute('data-update-unread')).toBe('true') })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(trigger.getAttribute('data-update-unread')).toBe('true')
+
+    act(() => {
+      publishStatus?.({
+        status: 'available', currentVersion: '0.1.0-rc.9', version: '0.1.0-rc.10', unread: false,
+      })
+    })
+    expect(trigger.hasAttribute('data-update-unread')).toBe(false)
+  })
+
   it('renders the trigger seat content as the accessible name (no aria-label of its own)', () => {
     const { renderSlot } = mount()
     const trigger = screen.getByRole('button', { name: 'Settings' })
