@@ -10,7 +10,7 @@ test('desktop package uses the DeepSeek Harness Workbench brand and icon', async
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
 
   assert.equal(packageJson.description, 'Global, local-first, multi-provider coding agent desktop workbench built on DeepSeek Harness')
-  assert.equal(packageJson.version, '0.1.0-rc.11')
+  assert.equal(packageJson.version, '0.1.0-rc.12')
   assert.equal(packageJson.build.productName, 'DeepSeek Harness Workbench')
   assert.equal(packageJson.build.nsis.shortcutName, 'DeepSeek Harness Workbench')
   assert.equal(packageJson.build.win.icon, 'build/deepseek-icon.png')

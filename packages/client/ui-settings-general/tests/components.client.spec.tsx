@@ -100,6 +100,26 @@ describe('DesktopUpdateRow', () => {
     await waitFor(() => { expect(acknowledgeUpdate).toHaveBeenCalledOnce() })
     expect(row.hasAttribute('data-update-unread')).toBe(false)
   })
+
+  it('shows current version, remote version, and the last successful check time', async () => {
+    window.dshDesktop = {
+      packaged: true,
+      checkForUpdates: vi.fn(),
+      getUpdateStatus: vi.fn().mockResolvedValue({
+        status: 'available',
+        currentVersion: '0.1.0-rc.10',
+        version: '0.1.0-rc.11',
+        unread: true,
+        checkedAt: '2026-08-18T08:40:00.000Z',
+      } as never),
+    }
+
+    render(<DesktopUpdateRow t={t} />)
+
+    expect(await screen.findByText('Current version 0.1.0-rc.10')).toBeTruthy()
+    expect(screen.getByText('Latest version 0.1.0-rc.11')).toBeTruthy()
+    expect(screen.getByText(/Last checked .*2026/)).toBeTruthy()
+  })
 })
 
 describe('SettingsDocumentAction', () => {

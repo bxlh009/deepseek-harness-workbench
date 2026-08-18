@@ -357,6 +357,18 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
               disabled={disabled}
               onChange={(event) => { patch(index, { name: event.target.value === '' ? undefined : event.target.value }) }}
             />
+            <label className={styles['modelVisionToggle']} title={t('modelVisionInputHint')}>
+              <input
+                type="checkbox"
+                checked={acceptsImages(model)}
+                aria-label={`${t('modelVisionInput')} ${index + 1}`}
+                disabled={disabled}
+                onChange={(event) => {
+                  patch(index, { input: event.target.checked ? ['text', 'image'] : ['text'] })
+                }}
+              />
+              <span>{t('modelVisionInput')}</span>
+            </label>
             <button
               type="button"
               className={styles['iconButton']}
@@ -421,21 +433,6 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
                     disabled={disabled}
                     onChange={(event) => { editCapacity(index, 'maxTokens', event.target.value) }}
                   />
-                </label>
-                <label className={`${styles['modelField']} ${styles['modelVisionField']}`}>
-                  <span className={styles['modelVisionControl']}>
-                    <input
-                      type="checkbox"
-                      checked={acceptsImages(model)}
-                      aria-label={`${t('modelVisionInput')} ${index + 1}`}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        patch(index, { input: event.target.checked ? ['text', 'image'] : ['text'] })
-                      }}
-                    />
-                    <span className={styles['modelFieldLabel']}>{t('modelVisionInput')}</span>
-                  </span>
-                  <span className={styles['modelFieldHint']}>{t('modelVisionInputHint')}</span>
                 </label>
               </div>
             )

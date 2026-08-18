@@ -39,10 +39,20 @@
 }
 
 .description {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-size: 12px;
   line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
   overflow-wrap: anywhere;
+}
+
+.versionFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--dsw-alias-label-secondary);
 }
 
 .button {
