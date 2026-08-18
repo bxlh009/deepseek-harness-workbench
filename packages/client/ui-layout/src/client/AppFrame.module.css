@@ -36,6 +36,10 @@
   overflow: hidden;
 }
 
+.centerCol[hidden] {
+  display: none;
+}
+
 .detailsCol {
   min-width: 0;
   overflow: hidden;

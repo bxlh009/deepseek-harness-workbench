@@ -1,0 +1,45 @@
+- main "写作工作台":
+  - complementary:
+    - strong: 我的作品
+    - button "新建作品": ＋
+    - combobox:
+      - option "未命名作品" [selected]
+    - text: 作品名
+    - textbox "作品名": 未命名作品
+    - text: 类型
+    - textbox "类型":
+      - /placeholder: 科幻、悬疑、都市……
+    - text: 章节目录
+    - button "＋ 新建章节"
+    - button "第一章"
+  - text: 模型
+  - combobox "选择模型":
+    - option "请选择模型" [selected]
+  - text: 已自动保存
+  - button "导出 Markdown"
+  - textbox "章节标题": 第一章
+  - textbox "章节摘要":
+    - /placeholder: 本章摘要（会提供给模型保持连贯）
+  - textbox "正文":
+    - /placeholder: 从这里开始写正文……
+  - text: 本章 0 字
+  - region "AI 写作工具":
+    - button "续写"
+    - button "改写"
+    - button "润色"
+    - button "检查"
+    - textbox "写作指令":
+      - /placeholder: 例如：续写 1200 字，让主角发现新的线索……
+    - button "生成预览" [disabled]
+    - paragraph: 请先手动选择模型；工作台不会替你切换模型。
+  - complementary:
+    - heading "写作助手" [level=2]
+    - tablist:
+      - button "对话"
+      - button "记忆库"
+    - strong: 和助手讨论你的正文
+    - text: 选中文字引用过来，助手会结合世界观、人物和关系记忆回答。
+    - textbox "给写作助手发消息":
+      - /placeholder: 询问情节、讨论改法，或先从正文引用一段……
+    - button "发送消息" [disabled]: 发送
+    - paragraph: 对话也使用你在顶部手动选择的模型。
