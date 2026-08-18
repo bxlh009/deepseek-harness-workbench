@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { HostSupervisor, isHostRuntimeRoot } from './host-supervisor.mjs'
 import { FreeLlmSupervisor } from './freellmapi-supervisor.mjs'
+import { ensureFreeLlmProfile } from './freellmapi-profile.mjs'
 import { registerDesktopUpdater } from './updater.mjs'
 import { createUtilityProcessSpawner } from './utility-process-spawner.mjs'
 
@@ -53,7 +54,9 @@ async function ensureFreeLlm() {
   freeLlmFailure = undefined
   const runtimeRoot = resolveFreeLlmRuntime()
   freeLlmSupervisor = new FreeLlmSupervisor({
-    entry: join(DESKTOP_DIR, 'freellmapi-sidecar.mjs'),
+    entry: app.isPackaged
+      ? resolve(process.resourcesPath, 'freellmapi-sidecar.mjs')
+      : join(DESKTOP_DIR, 'freellmapi-sidecar.mjs'),
     runtimeRoot,
     dataDirectory: join(app.getPath('userData'), 'freellmapi'),
     nodeCommand: app.isPackaged
@@ -113,11 +116,18 @@ async function openFreeLlmDashboard() {
 
 async function ensureHost() {
   if (hostInfo !== undefined) return hostInfo
+  const freeLlm = await ensureFreeLlm()
+  const dshHome = resolveDshHome()
+  await ensureFreeLlmProfile({
+    settingsPath: join(dshHome, 'settings.yaml'),
+    connection: freeLlm,
+  })
   const sourceRoot = resolveSourceRoot()
   assertSourceRoot(sourceRoot)
   hostSupervisor = new HostSupervisor({
     sourceRoot,
-    dshHome: resolveDshHome(),
+    dshHome,
+    baseEnvironment: { ...process.env, FREELLMAPI_API_KEY: freeLlm.apiKey },
     ...(app.isPackaged ? {
       nodeCommand: 'electron-utility-process',
       workingDirectory: process.resourcesPath,
@@ -180,6 +190,7 @@ async function start() {
     await createMainWindow()
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
+    console.error(`[desktop-startup] ${message}`)
     dialog.showErrorBox(`${PRODUCT_NAME} failed to start`, message)
     app.quit()
   }
@@ -206,7 +217,6 @@ if (!singleInstance) {
     registerDesktopUpdater({ app, dialog, ipcMain, getWindow: () => mainWindow })
     ipcMain.handle('dsh:freellmapi:status', () => freeLlmStatus())
     ipcMain.handle('dsh:freellmapi:open-dashboard', () => openFreeLlmDashboard())
-    void ensureFreeLlm().catch(error => console.error('[freellmapi]', error))
     return start()
   })
 

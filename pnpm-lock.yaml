@@ -361,6 +361,9 @@ importers:
       electron-updater:
         specifier: ^6.8.9
         version: 6.8.9
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
       electron:
         specifier: 43.4.0

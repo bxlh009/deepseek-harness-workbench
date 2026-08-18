@@ -10,7 +10,7 @@ test('desktop package uses the DeepSeek Harness Workbench brand and icon', async
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
 
   assert.equal(packageJson.description, 'Global, local-first, multi-provider coding agent desktop workbench built on DeepSeek Harness')
-  assert.equal(packageJson.version, '0.1.0-rc.12')
+  assert.equal(packageJson.version, '0.1.0-rc.13')
   assert.equal(packageJson.build.productName, 'DeepSeek Harness Workbench')
   assert.equal(packageJson.build.nsis.shortcutName, 'DeepSeek Harness Workbench')
   assert.equal(packageJson.build.win.icon, 'build/deepseek-icon.png')
@@ -26,6 +26,7 @@ test('desktop package uses the DeepSeek Harness Workbench brand and icon', async
 test('desktop package exposes an in-app updater backed by the independent release repository', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
   assert.equal(packageJson.dependencies['electron-updater'], '^6.8.9')
+  assert.equal(packageJson.dependencies.yaml, '^2.9.0')
   assert.deepEqual(packageJson.build.publish, [{
     provider: 'github',
     owner: 'bxlh009',
@@ -41,6 +42,8 @@ test('desktop package exposes an in-app updater backed by the independent releas
   const main = await readFile(new URL('../src/main.mjs', import.meta.url), 'utf8')
   assert.match(main, /preload\.cjs/)
   assert.match(main, /registerDesktopUpdater/)
+  assert.match(main, /ensureFreeLlmProfile/)
+  assert.match(main, /FREELLMAPI_API_KEY: freeLlm\.apiKey/)
 
   const updater = await readFile(new URL('../src/updater.mjs', import.meta.url), 'utf8')
   assert.match(updater, /autoDownload = false/)
@@ -57,6 +60,7 @@ test('desktop releases publish updater metadata and installer artifacts from ver
   assert.match(workflow, /desktop-v\*/)
   assert.match(workflow, /desktop:package/)
   assert.match(workflow, /electron-builder\.CMD --win nsis --publish never/)
+  assert.match(workflow, /smoke-installed-freellmapi-runtime\.mjs/)
   assert.match(workflow, /gh release create/)
   assert.match(workflow, /--latest/)
   assert.doesNotMatch(workflow, /--publish always/)
@@ -81,5 +85,15 @@ test('desktop installer ships the runtime as one archive plus native unpacked fi
     from: '../../dist/desktop/package/freellmapi',
     to: 'freellmapi',
     filter: ['**/*'],
+  }, {
+    from: '../../dist/desktop/package/freellmapi/node_modules',
+    to: 'freellmapi/node_modules',
+    filter: ['**/*'],
+  }, {
+    from: 'src/freellmapi-sidecar.mjs',
+    to: 'freellmapi-sidecar.mjs',
   }])
+
+  const main = await readFile(new URL('../src/main.mjs', import.meta.url), 'utf8')
+  assert.match(main, /resolve\(process\.resourcesPath, 'freellmapi-sidecar\.mjs'\)/)
 })

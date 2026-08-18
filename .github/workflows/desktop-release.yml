@@ -59,6 +59,16 @@ jobs:
         working-directory: apps/desktop
         run: .\node_modules\.bin\electron-builder.CMD --win nsis --publish never
 
+      - name: Smoke-test installed FreeLLMAPI resources
+        shell: pwsh
+        run: |
+          $resources = Resolve-Path 'dist/desktop/artifacts/win-unpacked/resources'
+          $dataDirectory = Join-Path '${{ runner.temp }}' 'freellmapi-installed-smoke'
+          & "$resources/runtime.asar.unpacked/node.exe" `
+            'apps/desktop/test/smoke-installed-freellmapi-runtime.mjs' `
+            $resources `
+            $dataDirectory
+
       - name: Publish one deterministic GitHub Release
         shell: pwsh
         run: |
