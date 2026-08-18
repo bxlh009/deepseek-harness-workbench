@@ -12,7 +12,10 @@ import { formatCapacity, parseCapacity } from '../src/client/DeepSeekModelsEdito
 import { ModelsSettingsStore, deriveKeyRef, protocolChoices } from '../src/client/store.ts'
 import { en } from '../src/client/locales.ts'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  Reflect.deleteProperty(window, 'dshDesktop')
+})
 
 const t: ModelsSectionInjected['t'] = key => en[key]
 
@@ -709,6 +712,36 @@ describe('hand-declared providers', () => {
       settingsNs: 'llm-pi-ai',
       baseURL: 'http://127.0.0.1:11434/v1',
       api: 'openai-completions',
+    })
+  })
+
+  it('prefills the embedded FreeLLMAPI gateway and requires its unified key before discovery', async () => {
+    const openDashboard = vi.fn(() => Promise.resolve({ status: 'running' }))
+    Object.defineProperty(window, 'dshDesktop', {
+      configurable: true,
+      value: { openFreeLLMAPIDashboard: openDashboard },
+    })
+    const { discover } = mountCard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'FreeLLMAPI' }))
+
+    expect(screen.getByLabelText<HTMLInputElement>(en.customRoute).value).toBe('freellmapi')
+    expect(screen.getByLabelText<HTMLInputElement>(en.customDisplayName).value).toBe('FreeLLMAPI')
+    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value).toBe('http://127.0.0.1:31415/v1')
+    expect(screen.getByLabelText<HTMLSelectElement>(en.customApi).value).toBe('openai-completions')
+    expect(buttonNamed(en.fetchModels).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: en.manageFreeLLMAPI }))
+    expect(openDashboard).toHaveBeenCalledOnce()
+
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'freellmapi-test-key' } })
+    fireEvent.click(screen.getByRole('button', { name: en.fetchModels }))
+
+    await waitFor(() => { expect(discover).toHaveBeenCalledOnce() })
+    expect(firstProbe(discover)).toMatchObject({
+      settingsNs: 'llm-pi-ai',
+      baseURL: 'http://127.0.0.1:31415/v1',
+      api: 'openai-completions',
+      apiKey: 'freellmapi-test-key',
     })
   })
 

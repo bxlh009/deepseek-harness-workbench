@@ -21,6 +21,12 @@ pnpm.cmd run desktop:dist
 
 这个命令会先构建仓库，再从 workspace 包 tarball 创建干净运行时，打包 Windows `node.exe`，最后调用 Electron Builder。便携版可执行文件和 NSIS 安装包会写入 `dist/desktop/artifacts/`，文件名以 `DeepSeek-Harness-Workbench-` 开头。安装后的应用不要求用户另外安装 Node.js 或 pnpm。
 
+## 内置 FreeLLMAPI 网关
+
+桌面安装包内含固定版本、MIT 许可的 FreeLLMAPI 运行时，并会自动在本机私有环回地址 `127.0.0.1:31415` 启动。进入模型设置，添加自定义提供方并选择 **FreeLLMAPI**，再点击「**管理 FreeLLMAPI**」即可配置上游提供方密钥。其管理数据库、自动生成的加密密钥和统一 API 密钥都保存在 Electron 用户数据目录的 `freellmapi/` 下，因此正常的软件内更新只替换程序文件，不会删除这些状态。
+
+FreeLLMAPI 只是聚合各上游提供方的免费额度，并不是无限免费模型服务，也没有可用性保证；用户仍需提供自己符合条件的上游密钥。内置源码版本与许可证说明记录在 `third_party/freellmapi/NOTICE.md`。
+
 ## 向已安装用户发布更新
 
 桌面端使用独立仓库 `bxlh009/deepseek-harness-workbench` 的 GitHub Releases 作为更新渠道。软件启动 15 秒后检查一次，之后每 6 小时检查；发现新版本时只显示提示，由用户决定是否下载。下载完成后，用户可以立即重启安装或稍后处理。更新覆盖程序文件，但用户数据目录中的模型、API 密钥、会话和皮肤配置会保留。

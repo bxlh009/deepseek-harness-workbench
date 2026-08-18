@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, utilityProcess } from 'electron'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { HostSupervisor, isHostRuntimeRoot } from './host-supervisor.mjs'
+import { FreeLlmSupervisor } from './freellmapi-supervisor.mjs'
 import { registerDesktopUpdater } from './updater.mjs'
 import { createUtilityProcessSpawner } from './utility-process-spawner.mjs'
 
@@ -11,6 +12,10 @@ const PRODUCT_ICON = join(DESKTOP_DIR, '..', 'build', 'deepseek-icon.png')
 let mainWindow
 let hostSupervisor
 let hostInfo
+let freeLlmSupervisor
+let freeLlmInfo
+let freeLlmFailure
+let freeLlmWindow
 let quitting = false
 
 function resolveSourceRoot() {
@@ -33,6 +38,77 @@ function resolveDshHome() {
   const configuredHome = process.env.DSH_DESKTOP_HOME?.trim()
   if (configuredHome !== undefined && configuredHome.length > 0) return resolve(configuredHome)
   return join(app.getPath('userData'), 'dsh')
+}
+
+function resolveFreeLlmRuntime() {
+  const configured = process.env.DSH_FREELLMAPI_RUNTIME_ROOT?.trim()
+  if (configured !== undefined && configured.length > 0) return resolve(configured)
+  return app.isPackaged
+    ? resolve(process.resourcesPath, 'freellmapi')
+    : resolve(join(DESKTOP_DIR, '..', '..', '..', '..', 'freellmapi-upstream', 'desktop', 'build'))
+}
+
+async function ensureFreeLlm() {
+  if (freeLlmInfo !== undefined) return freeLlmInfo
+  freeLlmFailure = undefined
+  const runtimeRoot = resolveFreeLlmRuntime()
+  freeLlmSupervisor = new FreeLlmSupervisor({
+    entry: join(DESKTOP_DIR, 'freellmapi-sidecar.mjs'),
+    runtimeRoot,
+    dataDirectory: join(app.getPath('userData'), 'freellmapi'),
+    nodeCommand: app.isPackaged
+      ? resolve(process.resourcesPath, 'runtime.asar.unpacked', 'node.exe')
+      : process.env.DSH_DESKTOP_NODE_RUNTIME ?? 'node',
+  })
+  try {
+    freeLlmInfo = await freeLlmSupervisor.start()
+    return freeLlmInfo
+  } catch (error) {
+    freeLlmFailure = error instanceof Error ? error.message : String(error)
+    freeLlmSupervisor = undefined
+    throw error
+  }
+}
+
+function freeLlmStatus() {
+  if (freeLlmInfo !== undefined) return { status: 'running', baseURL: freeLlmInfo.baseURL }
+  if (freeLlmFailure !== undefined) return { status: 'error', message: freeLlmFailure }
+  return { status: 'starting' }
+}
+
+async function openFreeLlmDashboard() {
+  const info = await ensureFreeLlm()
+  if (freeLlmWindow !== undefined && !freeLlmWindow.isDestroyed()) {
+    freeLlmWindow.show()
+    freeLlmWindow.focus()
+    return freeLlmStatus()
+  }
+  const origin = new URL(info.dashboardURL).origin
+  const window = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 720,
+    minHeight: 480,
+    title: 'FreeLLMAPI',
+    parent: mainWindow,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      preload: join(DESKTOP_DIR, 'freellmapi-preload.cjs'),
+      additionalArguments: [`--freellmapi-dashboard-token=${info.dashboardToken}`],
+    },
+  })
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  window.webContents.on('will-navigate', (event, url) => {
+    if (new URL(url).origin !== origin) event.preventDefault()
+  })
+  window.on('closed', () => {
+    if (freeLlmWindow === window) freeLlmWindow = undefined
+  })
+  await window.loadURL(info.dashboardURL)
+  freeLlmWindow = window
+  return freeLlmStatus()
 }
 
 async function ensureHost() {
@@ -89,6 +165,11 @@ async function createMainWindow() {
 }
 
 async function shutdown() {
+  freeLlmWindow?.destroy()
+  freeLlmWindow = undefined
+  await freeLlmSupervisor?.stop()
+  freeLlmSupervisor = undefined
+  freeLlmInfo = undefined
   await hostSupervisor?.stop()
   hostSupervisor = undefined
   hostInfo = undefined
@@ -123,6 +204,9 @@ if (!singleInstance) {
 
   app.whenReady().then(() => {
     registerDesktopUpdater({ app, dialog, ipcMain, getWindow: () => mainWindow })
+    ipcMain.handle('dsh:freellmapi:status', () => freeLlmStatus())
+    ipcMain.handle('dsh:freellmapi:open-dashboard', () => openFreeLlmDashboard())
+    void ensureFreeLlm().catch(error => console.error('[freellmapi]', error))
     return start()
   })
 

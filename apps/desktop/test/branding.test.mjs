@@ -77,5 +77,9 @@ test('desktop installer ships the runtime as one archive plus native unpacked fi
     from: '../../dist/desktop/package/runtime.asar.unpacked/node_modules',
     to: 'runtime.asar.unpacked/node_modules',
     filter: ['**/*'],
+  }, {
+    from: '../../dist/desktop/package/freellmapi',
+    to: 'freellmapi',
+    filter: ['**/*'],
   }])
 })

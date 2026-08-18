@@ -48,6 +48,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "../../dist/desktop/package/freellmapi",
+        "to": "freellmapi",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {

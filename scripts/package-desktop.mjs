@@ -12,6 +12,7 @@ import { spawnSync } from 'node:child_process'
 import { createPackageWithOptions } from '@electron/asar'
 import {
   copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -28,6 +29,8 @@ const TARBALL_ROOT = join(OUTPUT_ROOT, 'tarballs')
 const RUNTIME_ROOT = join(OUTPUT_ROOT, 'runtime')
 const RUNTIME_ARCHIVE = join(OUTPUT_ROOT, 'runtime.asar')
 const NPM_CACHE_ROOT = join(OUTPUT_ROOT, 'npm-cache')
+const FREELLMAPI_SOURCE = join(REPOSITORY_ROOT, 'third_party', 'freellmapi')
+const FREELLMAPI_RUNTIME = join(OUTPUT_ROOT, 'freellmapi')
 const VERSION = JSON.parse(readFileSync(join(REPOSITORY_ROOT, 'package.json'), 'utf8')).version
 
 function commandSpec(command) {
@@ -147,6 +150,31 @@ function buildRuntime(packages) {
   }, null, 2)}\n`)
 }
 
+function buildFreeLlmApiRuntime() {
+  if (!existsSync(join(FREELLMAPI_SOURCE, 'server.mjs'))
+    || !existsSync(join(FREELLMAPI_SOURCE, 'client-dist', 'index.html'))
+    || !existsSync(join(FREELLMAPI_SOURCE, 'LICENSE'))) {
+    throw new Error('The pinned FreeLLMAPI runtime or its MIT license is missing.')
+  }
+  cpSync(FREELLMAPI_SOURCE, FREELLMAPI_RUNTIME, { recursive: true })
+  writeFileSync(join(FREELLMAPI_RUNTIME, 'package.json'), `${JSON.stringify({
+    name: '@deepseek-harness/freellmapi-sidecar-runtime',
+    version: '0.8.0',
+    private: true,
+    type: 'module',
+    dependencies: { 'better-sqlite3': '12.10.0' },
+  }, null, 2)}\n`)
+  run('npm', [
+    'install',
+    '--omit=dev',
+    '--no-audit',
+    '--no-fund',
+    '--package-lock=false',
+  ], FREELLMAPI_RUNTIME, {
+    npm_config_cache: process.env.DSH_DESKTOP_NPM_CACHE ?? NPM_CACHE_ROOT,
+  })
+}
+
 async function archiveRuntime() {
   await createPackageWithOptions(RUNTIME_ROOT, RUNTIME_ARCHIVE, {
     dot: true,
@@ -170,6 +198,7 @@ async function main() {
     throw new Error('The packed runtime does not contain @deepseek-ai/dsh.')
   }
   buildRuntime(uniquePackages)
+  buildFreeLlmApiRuntime()
   await archiveRuntime()
   console.log(`desktop runtime: ${String(uniquePackages.length)} package tarball(s) installed in ${RUNTIME_ROOT}`)
 }
