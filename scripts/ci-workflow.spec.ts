@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 const root = resolve(import.meta.dirname, '..')
 const runnerPrivatePnpmDestination = '${{ runner.temp }}/setup-pnpm'
+const upstreamPullRequestOnly = "github.event_name == 'pull_request' && github.repository == 'deepseek-harness/deepseek-harness'"
 
 describe('CI workflow', () => {
   it('isolates every pnpm action setup destination per runner', () => {
@@ -59,7 +60,7 @@ describe('CI workflow', () => {
     // Required PR job: Wine on ubuntu-latest, runs wine-windows-gates.sh.
     expect(windows['runs-on']).toBe('ubuntu-latest')
     expect(windows.name).toBe('windows node 24 / wine blocking')
-    expect(windows.if).toBe("github.event_name == 'pull_request'")
+    expect(windows.if).toBe(upstreamPullRequestOnly)
     expect(commandSteps.some(step => step.run.includes('wine-windows-gates.sh'))).toBe(true)
 
     // windows-native: non-blocking native job with failover, runs windows-complete.
@@ -73,7 +74,7 @@ describe('CI workflow', () => {
     expect(windowsNative['runs-on']).toContain("github.repository != 'deepseek-harness/deepseek-harness'")
     expect(windowsNative['runs-on']).toContain('windows-2025')
     expect(windowsNative.name).toBe('windows node 24 / native complete')
-    expect(windowsNative.if).toBe("github.event_name == 'pull_request'")
+    expect(windowsNative.if).toBe(upstreamPullRequestOnly)
     const nativeCommandSteps = (windowsNative.steps as unknown[]).filter((step): step is Record<string, unknown> & { run: string } => (
       isRecord(step) && typeof step.run === 'string'
     ))
@@ -146,7 +147,9 @@ describe('CI workflow', () => {
     // would silently misclassify it as gated.
     const NOT_PUSH_REACHABLE = new Set([
       "github.event_name == 'pull_request'",
+      upstreamPullRequestOnly,
       "always() && github.event_name == 'pull_request'",
+      "always() && github.event_name == 'pull_request' && github.repository == 'deepseek-harness/deepseek-harness'",
       "github.event_name == 'workflow_dispatch' && inputs.suite == 'larger-runner-benchmark'",
       "github.event_name == 'workflow_dispatch' && inputs.suite == 'consolidated-runner-benchmark'",
     ])
@@ -193,7 +196,7 @@ describe('CI workflow', () => {
     }
 
     expect(pythonRuntime).toMatchObject({
-      if: "github.event_name == 'pull_request'",
+      if: upstreamPullRequestOnly,
       name: 'python runtime / release-shaped Linux x64',
       uses: './.github/workflows/build-exe-for-python-sdk.yml',
       with: {
