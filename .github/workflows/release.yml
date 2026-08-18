@@ -35,6 +35,9 @@ env:
 jobs:
   pack:
     name: Pack npm tarballs
+    # The independent desktop workbench has its own desktop-v* release flow;
+    # this npm family is published only by the upstream project.
+    if: ${{ github.repository == 'deepseek-harness/deepseek-harness' }}
     runs-on: ubuntu-24.04
     steps:
       # Complete history: the release scripts read tags.
