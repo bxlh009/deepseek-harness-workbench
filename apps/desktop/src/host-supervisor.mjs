@@ -220,7 +220,7 @@ export class HostSupervisor {
   #stopPromise
 
   /**
-   * @param {{sourceRoot: string, host?: string, nodeCommand?: string, workingDirectory?: string, runAsNode?: boolean, dshHome?: string, spawnProcess?: typeof defaultSpawn, startupTimeoutMs?: number, shutdownTimeoutMs?: number, forceShutdownTimeoutMs?: number}} options - Host launch policy.
+   * @param {{sourceRoot: string, host?: string, nodeCommand?: string, workingDirectory?: string, runAsNode?: boolean, dshHome?: string, baseEnvironment?: NodeJS.ProcessEnv, spawnProcess?: typeof defaultSpawn, startupTimeoutMs?: number, shutdownTimeoutMs?: number, forceShutdownTimeoutMs?: number}} options - Host launch policy.
    */
   constructor({
     sourceRoot,
@@ -229,6 +229,7 @@ export class HostSupervisor {
     workingDirectory,
     runAsNode = false,
     dshHome,
+    baseEnvironment = process.env,
     spawnProcess = defaultSpawn,
     startupTimeoutMs = DEFAULT_STARTUP_TIMEOUT_MS,
     startupStabilityMs = DEFAULT_STARTUP_STABILITY_MS,
@@ -242,6 +243,7 @@ export class HostSupervisor {
     this.workingDirectory = workingDirectory === undefined ? this.sourceRoot : resolve(workingDirectory)
     this.runAsNode = runAsNode
     this.dshHome = dshHome === undefined ? undefined : resolve(dshHome)
+    this.baseEnvironment = baseEnvironment
     this.spawnProcess = spawnProcess
     this.startupTimeoutMs = startupTimeoutMs
     this.startupStabilityMs = startupStabilityMs
@@ -275,7 +277,11 @@ export class HostSupervisor {
     this.outputLines = lines
     const child = this.spawnProcess(this.nodeCommand, args, {
       cwd: this.workingDirectory,
-      env: buildHostEnvironment({ dshHome: this.dshHome, runAsNode: this.runAsNode }),
+      env: buildHostEnvironment({
+        dshHome: this.dshHome,
+        runAsNode: this.runAsNode,
+        baseEnvironment: this.baseEnvironment,
+      }),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       windowsHide: true,

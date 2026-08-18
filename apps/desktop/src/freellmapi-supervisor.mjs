@@ -56,6 +56,10 @@ export class FreeLlmSupervisor {
       windowsHide: true,
     })
     this.#child = child
+    let stderr = ''
+    child.stderr?.on('data', (chunk) => {
+      stderr = `${stderr}${String(chunk)}`.slice(-8_000)
+    })
 
     try {
       this.#info = await new Promise((resolve, reject) => {
@@ -65,7 +69,9 @@ export class FreeLlmSupervisor {
           callback(value)
         }
         child.once('error', settle(reject))
-        child.once('exit', settle((code) => reject(new Error(`FreeLLMAPI exited before readiness with code ${String(code)}.`))))
+        child.once('exit', settle((code) => reject(new Error(
+          `FreeLLMAPI exited before readiness with code ${String(code)}.${stderr.length === 0 ? '' : `\n${stderr}`}`,
+        ))))
         child.on('message', (message) => {
           if (message?.type !== 'freellmapi-ready') return
           const port = Number(message.port)

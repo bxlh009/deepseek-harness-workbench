@@ -85,7 +85,7 @@ test('starts and stops the Host through one owned child process', async () => {
   assert.equal(supervisor.running, false)
 })
 
-test('passes the configured desktop DSH_HOME to the owned Host process', async () => {
+test('passes the desktop home and embedded gateway key to the owned Host process', async () => {
   let server
   let child
   let spawnOptions
@@ -115,6 +115,7 @@ test('passes the configured desktop DSH_HOME to the owned Host process', async (
   const supervisor = new HostSupervisor({
     sourceRoot: repositoryRoot,
     dshHome,
+    baseEnvironment: { PATH: 'test-path', FREELLMAPI_API_KEY: 'embedded-key' },
     runAsNode: true,
     spawnProcess,
     startupTimeoutMs: 2_000,
@@ -123,5 +124,7 @@ test('passes the configured desktop DSH_HOME to the owned Host process', async (
   await supervisor.start()
   assert.equal(spawnOptions.env.DSH_HOME, dshHome)
   assert.equal(spawnOptions.env.ELECTRON_RUN_AS_NODE, '1')
+  assert.equal(spawnOptions.env.FREELLMAPI_API_KEY, 'embedded-key')
+  assert.equal(spawnOptions.env.PATH, 'test-path')
   await supervisor.stop()
 })
