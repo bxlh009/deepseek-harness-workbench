@@ -8,11 +8,18 @@
  * details open/close from ui-conversation) — writes stay inside the store's
  * declared action set, delivered as the registration's bound actions.
  */
+import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
 import type { createLayoutStore } from './stores.ts'
 
 /** The layout store's bound action set (framework-baked, draft params peeled). */
 export type PanelActions = BoundActions<ReturnType<typeof createLayoutStore>>
+
+/** Product surface occupying the center of the workbench. */
+export type WorkbenchSurface = 'coding' | 'writing'
+
+/** Observable surface selection shared by the frame and sidebar. */
+export interface WorkbenchSurfaceState { active: WorkbenchSurface }
 
 /**
  * The outward layout face (`ctx.layout`): the panel transitions other
@@ -21,16 +28,24 @@ export type PanelActions = BoundActions<ReturnType<typeof createLayoutStore>>
  * only).
  */
 export interface ILayout {
+  /** Current workbench surface. */
+  readonly surface: SnapshotStore<WorkbenchSurfaceState>
   /** Toggle the sidebar panel (closed ⟷ contract default width). */
   toggleSidebar(): void
   /** Open the details panel (no-op when already open). */
   openDetails(): void
   /** Close the details panel. */
   closeDetails(): void
+  /** Show the coding-task surface. */
+  showCoding(): void
+  /** Show the writing surface. */
+  showWriting(): void
 }
 
 /** Cross-plugin panel-action face (ctx.layout). */
 export class LayoutController implements ILayout {
+  /** Observable surface selection; consumers bind it through slot inject hooks. */
+  readonly surface = createSnapshotStore<WorkbenchSurfaceState>({ active: 'coding' })
   #panels: PanelActions | undefined
 
   /**
@@ -57,6 +72,15 @@ export class LayoutController implements ILayout {
   /** Close the details panel. */
   closeDetails(): void {
     this.#require().closeDetails()
+  }
+
+  /** Show the coding-task surface. */
+  showCoding(): void { this.surface.update((state) => { state.active = 'coding' }) }
+
+  /** Show the writing surface and close transient coding details. */
+  showWriting(): void {
+    this.surface.update((state) => { state.active = 'writing' })
+    this.#panels?.closeDetails()
   }
 
   #require(): PanelActions {

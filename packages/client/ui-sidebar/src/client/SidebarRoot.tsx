@@ -21,6 +21,7 @@ import {
   FishLogo,
   IconCodeOutline16,
   IconCordisPluginOutline14,
+  IconEditOutline16,
   IconNewChatOutline16, IconPanelLeftOutline16,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -49,9 +50,12 @@ export function SidebarRoot({
   startSession,
   toggleSidebar,
   openSettings,
+  showSurface,
+  useSurface,
   t,
   renderSlot,
 }: SidebarRootComponentProps) {
+  const activeSurface = useSurface(state => state.active)
   // Wide content stays mounted while the collapse animates (fading via
   // .collapsed .wide), unmounts at settle, and remounts right away on expand.
   const [settled, setSettled] = useState(collapsed)
@@ -181,10 +185,24 @@ export function SidebarRoot({
       {/* Product navigation contains implemented destinations only. */}
       {wide && (
         <nav className={css.primaryNav} aria-label={t('nav.label')}>
-          <div className={clsx(css.navItem, css.navItemActive)} aria-current="page">
+          <button
+            type="button"
+            className={clsx(css.navItem, css.navItemButton, activeSurface === 'coding' && css.navItemActive)}
+            aria-current={activeSurface === 'coding' ? 'page' : undefined}
+            onClick={() => { showSurface('coding') }}
+          >
             <IconCodeOutline16 className={css.navIcon} size={16} />
             <span>{t('nav.tasks')}</span>
-          </div>
+          </button>
+          <button
+            type="button"
+            className={clsx(css.navItem, css.navItemButton, activeSurface === 'writing' && css.navItemActive)}
+            aria-current={activeSurface === 'writing' ? 'page' : undefined}
+            onClick={() => { showSurface('writing') }}
+          >
+            <IconEditOutline16 className={css.navIcon} size={16} />
+            <span>{t('nav.writing')}</span>
+          </button>
           <button
             type="button"
             className={clsx(css.navItem, css.navItemButton)}

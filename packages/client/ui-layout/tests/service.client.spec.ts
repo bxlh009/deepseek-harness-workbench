@@ -20,6 +20,17 @@ function fakePanels(): PanelActions {
 }
 
 describe('LayoutController', () => {
+  it('switches explicitly between coding and writing surfaces', () => {
+    const service = new LayoutController()
+    expect(service.surface.getSnapshot()).toEqual({ active: 'coding' })
+
+    service.showWriting()
+    expect(service.surface.getSnapshot()).toEqual({ active: 'writing' })
+
+    service.showCoding()
+    expect(service.surface.getSnapshot()).toEqual({ active: 'coding' })
+  })
+
   it('forwards the three panel actions to the attached set', () => {
     const service = new LayoutController()
     const panels = fakePanels()

@@ -34,11 +34,16 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-sidebar: dictionaries')
 
   const injectProps = (): SidebarRootInjected => ({
+    hooks: { surface: ctx.layout.surface },
     // The shell's New Session button rides the runtime's shared action
     // (current Session Workspace, then recent Workspace).
     startSession: (workspaceId) => { ctx.workspaces.startSession(workspaceId) },
     toggleSidebar: () => { ctx.layout.toggleSidebar() },
     openSettings: (sectionId) => { ctx.settingsNavigation.open(sectionId) },
+    showSurface: (surface) => {
+      if (surface === 'writing') ctx.layout.showWriting()
+      else ctx.layout.showCoding()
+    },
   })
   ctx.effect(
     () => ctx.slots.register({

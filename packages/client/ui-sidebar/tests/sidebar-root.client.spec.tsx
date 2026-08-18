@@ -7,6 +7,7 @@ import type {
 } from '../src/client/contract/slots.ts'
 import { SidebarRoot } from '../src/client/SidebarRoot.tsx'
 import { en } from '../src/client/locales.ts'
+import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
 
 // English-dictionary translate stub: the shell renders the same copy the
 // assertions below query by accessible name.
@@ -25,6 +26,8 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
   const startSession = vi.fn()
   const toggleSidebar = vi.fn()
   const openSettings = vi.fn()
+  const showSurface = vi.fn()
+  const surface = createSnapshotStore({ active: 'coding' as const })
   let regionOwner: SidebarSectionOwnerProps | undefined
   let settingsOwner: SidebarSettingsOwnerProps | undefined
   let footerActionOwner: SidebarFooterActionOwnerProps | undefined
@@ -34,6 +37,8 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
       collapsed={current.collapsed} width={current.width}
       useSessions={neverHook} useWorkspaces={neverHook}
       startSession={startSession} toggleSidebar={toggleSidebar} openSettings={openSettings} t={t}
+      useSurface={((selector: (state: { active: 'coding' }) => unknown) => selector(surface.getSnapshot())) as never}
+      showSurface={showSurface}
       renderSlot={((
         key: string,
         owner: SidebarFooterActionOwnerProps | SidebarSectionOwnerProps | SidebarSettingsOwnerProps,
@@ -56,6 +61,7 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
     startSession,
     toggleSidebar,
     openSettings,
+    showSurface,
     regionOwner: () => {
       if (regionOwner === undefined) throw new Error('region owner not rendered')
       return regionOwner
@@ -90,6 +96,10 @@ describe('SidebarRoot shell', () => {
   it('shows only implemented product navigation and opens the real Plugins section', () => {
     const b = mountShell()
     expect(screen.getByText('Coding tasks')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Writing' }))
+    expect(b.showSurface).toHaveBeenCalledWith('writing')
+    fireEvent.click(screen.getByRole('button', { name: 'Coding tasks' }))
+    expect(b.showSurface).toHaveBeenCalledWith('coding')
     fireEvent.click(screen.getByRole('button', { name: 'Plugins' }))
     expect(b.openSettings).toHaveBeenCalledWith('plugins')
     expect(screen.queryByText('Pull requests')).toBeNull()
