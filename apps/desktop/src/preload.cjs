@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('dshDesktop', Object.freeze({
   getUpdateStatus: () => ipcRenderer.invoke('dsh:updates:status'),
   acknowledgeUpdate: () => ipcRenderer.invoke('dsh:updates:acknowledge'),
   downloadUpdate: () => ipcRenderer.invoke('dsh:updates:download'),
+  getFreeLLMAPIStatus: () => ipcRenderer.invoke('dsh:freellmapi:status'),
+  openFreeLLMAPIDashboard: () => ipcRenderer.invoke('dsh:freellmapi:open-dashboard'),
   onUpdateStatus: (listener) => {
     const wrapped = (_event, status) => { listener(status) }
     ipcRenderer.on('dsh:updates:status', wrapped)

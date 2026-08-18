@@ -60,6 +60,16 @@ const LOCAL_PROVIDER_PRESETS: readonly ProviderPreset[] = [
   { route: 'lm-studio', displayName: 'LM Studio', baseURL: 'http://127.0.0.1:1234/v1' },
 ]
 
+/** Gateways owned by the desktop shell and exposed on loopback only. */
+const EMBEDDED_GATEWAY_PRESETS: readonly ProviderPreset[] = [
+  {
+    route: 'freellmapi',
+    displayName: 'FreeLLMAPI',
+    baseURL: 'http://127.0.0.1:31415/v1',
+    requiresKey: true,
+  },
+]
+
 /** Hosted vision routes whose current public API is OpenAI-compatible. */
 const CLOUD_VISION_PROVIDER_PRESETS: readonly ProviderPreset[] = [
   {
@@ -165,6 +175,20 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
     setFailure(undefined)
   }
 
+  const desktopBridge = (window as unknown as {
+    dshDesktop?: { openFreeLLMAPIDashboard?: () => Promise<unknown> }
+  }).dshDesktop
+  const openFreeLlmDashboard = async (): Promise<void> => {
+    const openDashboard = desktopBridge?.openFreeLLMAPIDashboard
+    if (openDashboard === undefined) return
+    setFailure(undefined)
+    try {
+      await openDashboard()
+    } catch (error) {
+      setFailure(messageOf(error))
+    }
+  }
+
   /** Perform the create, returning a failure message or undefined. */
   const createOnce = async (): Promise<string | undefined> => {
     const keyRef = deriveKeyRef(route)
@@ -245,6 +269,35 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           ))}
         </div>
         <p className={styles['advancedHint']}>{t('localPresetsHint')}</p>
+      </div>
+      <div className={styles['field']}>
+        <span className={styles['fieldLabel']}>{t('embeddedGatewayPresets')}</span>
+        <div className={styles['providerPresets']}>
+          {EMBEDDED_GATEWAY_PRESETS.map(preset => (
+            <button
+              key={preset.route}
+              className={styles['secondaryButton']}
+              type="button"
+              disabled={profileDisabled || taken.includes(preset.route)}
+              onClick={() => { applyPreset(preset) }}
+            >
+              {preset.displayName}
+            </button>
+          ))}
+        </div>
+        <p className={styles['advancedHint']}>{t('embeddedGatewayPresetsHint')}</p>
+        {route === 'freellmapi' && desktopBridge?.openFreeLLMAPIDashboard !== undefined
+          ? (
+            <button
+              className={styles['secondaryButton']}
+              type="button"
+              disabled={disabled}
+              onClick={() => { void openFreeLlmDashboard() }}
+            >
+              {t('manageFreeLLMAPI')}
+            </button>
+          )
+          : null}
       </div>
       <div className={styles['field']}>
         <span className={styles['fieldLabel']}>{t('cloudVisionPresets')}</span>
@@ -332,7 +385,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
             what a blank field means here instead: this route may authenticate
             through the provider's own ambient discovery or OAuth. */}
         {keyFailure === undefined
-          ? requiresKey && keyValue.length === 0 ? <p className={styles['advancedHint']}>{t('cloudVisionKeyRequired')}</p> : null
+          ? requiresKey && keyValue.length === 0 ? <p className={styles['advancedHint']}>{t('providerKeyRequired')}</p> : null
           : <p className={styles['error']}>{t(keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure)}</p>}
       </div>
       <ModelListEditor
@@ -344,7 +397,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           api: protocol,
           ...keyValue.length === 0 ? {} : { apiKey: keyValue },
         }}
-        probeBlocked={keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure ?? (requiresKey && keyValue.length === 0 ? 'cloudVisionKeyRequired' : undefined)}
+        probeBlocked={keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure ?? (requiresKey && keyValue.length === 0 ? 'providerKeyRequired' : undefined)}
         api={api}
         t={t}
         disabled={profileDisabled}

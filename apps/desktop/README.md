@@ -21,6 +21,12 @@ pnpm.cmd run desktop:dist
 
 This builds the repository, creates a clean runtime from the workspace package tarballs, bundles a Windows `node.exe`, and invokes Electron Builder. The portable executable and NSIS installer are written to `dist/desktop/artifacts/` with names beginning with `DeepSeek-Harness-Workbench-`. The installed application does not require the user to install Node.js or pnpm separately.
 
+## Built-in FreeLLMAPI gateway
+
+The desktop package includes a pinned MIT-licensed FreeLLMAPI runtime and starts it automatically on the private loopback address `127.0.0.1:31415`. Open Models settings, add a custom provider, choose **FreeLLMAPI**, and use **Manage FreeLLMAPI** to configure upstream provider keys. Its dashboard database, generated encryption key, and unified API key stay below Electron's user-data directory in `freellmapi/`, so normal in-app upgrades replace program files without deleting this state.
+
+FreeLLMAPI aggregates upstream providers' free tiers; it is not an unlimited model service and provides no availability guarantee. Users still supply their own eligible provider keys. The vendored source revision and license notice are recorded in `third_party/freellmapi/NOTICE.md`.
+
 ## Publish an update to installed users
 
 The desktop application uses GitHub Releases from the independent `bxlh009/deepseek-harness-workbench` repository as its update channel. It checks 15 seconds after startup and then every 6 hours. When a newer version is available, it prompts instead of downloading silently. After the download, the user can restart and install immediately or defer it. Program files are replaced, while models, API keys, sessions, and skin settings stored in the user-data directory remain intact.
