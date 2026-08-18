@@ -162,6 +162,9 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
   const disabled = props.readOnly || busy
   const layout = layoutOf(namespace.ns)
   const keyRef = refFor(namespace, settingsPath, props.provider)
+  const desktopBridge = (window as unknown as {
+    dshDesktop?: { openFreeLLMAPIDashboard?: () => Promise<unknown> }
+  }).dshDesktop
   // The same schema read the create card makes, so the choices offered here
   // and there cannot drift apart: both come from the adapter's own `Config`.
   // Only the pi-ai layout has a per-route protocol for the read to find, and
@@ -303,6 +306,17 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       setFailure(messageOf(error))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const openFreeLlmDashboard = async (): Promise<void> => {
+    const openDashboard = desktopBridge?.openFreeLLMAPIDashboard
+    if (openDashboard === undefined) return
+    setFailure(undefined)
+    try {
+      await openDashboard()
+    } catch (error) {
+      setFailure(messageOf(error))
     }
   }
 
@@ -482,6 +496,18 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       {layout === 'unknown'
         ? <p className={styles['advancedHint']}>{`${t('advancedHint')} (${namespace.ns})`}</p>
         : curatedFields(layout)}
+      {props.provider === 'freellmapi' && desktopBridge?.openFreeLLMAPIDashboard !== undefined
+        ? (
+          <button
+            className={styles['secondaryButton']}
+            type="button"
+            disabled={busy}
+            onClick={() => { void openFreeLlmDashboard() }}
+          >
+            {t('manageFreeLLMAPI')}
+          </button>
+        )
+        : null}
       {failure !== undefined ? <p className={styles['error']}>{failure}</p> : null}
       {props.credentialOnly === true || modelFailure === undefined
         ? null

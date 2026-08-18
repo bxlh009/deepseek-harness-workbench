@@ -9,7 +9,7 @@ import {
   fusionProfilesUsingProvider, ModelsSection, needsSetup, providerCopy, providerTargetLabel, removeProviderProfile,
 } from '../src/client/ModelsSection.tsx'
 import type { ModelsSectionInjected, ModelsSectionProps } from '../src/client/ModelsSection.tsx'
-import { pathOps } from '../src/client/ProviderEditor.tsx'
+import { pathOps, ProviderEditor } from '../src/client/ProviderEditor.tsx'
 import {
   DeepSeekModelsEditor, formatCapacity, modelDrafts, parseCapacity, validateDeepSeekModels,
 } from '../src/client/DeepSeekModelsEditor.tsx'
@@ -421,6 +421,41 @@ describe('ModelsSection', () => {
       await Promise.resolve()
     })
     expect(onClose).toHaveBeenCalledWith(true)
+  })
+
+  it('opens the authenticated FreeLLMAPI dashboard from an existing provider editor', async () => {
+    const openDashboard = vi.fn(() => Promise.resolve({ status: 'running' }))
+    Object.defineProperty(window, 'dshDesktop', {
+      configurable: true,
+      value: { openFreeLLMAPIDashboard: openDashboard },
+    })
+    const namespace = structuredClone(wireNamespaces()[2]!)
+    const providers = (namespace.value as { providers: Record<string, unknown> }).providers
+    providers.freellmapi = {
+      displayName: 'FreeLLMAPI',
+      baseURL: 'http://127.0.0.1:31415/v1',
+      api: 'openai-completions',
+      models: [{ id: 'auto', name: 'Auto' }],
+    }
+    const userProviders = (namespace.user as { providers: Record<string, unknown> }).providers
+    userProviders.freellmapi = providers.freellmapi
+    const { face } = scriptedFace()
+
+    render(<ProviderEditor
+      provider="freellmapi"
+      displayName="FreeLLMAPI"
+      declared
+      namespace={namespace}
+      settingsPath={['providers', 'freellmapi']}
+      api={face as never}
+      t={t}
+      readOnly={false}
+      onClose={() => {}}
+    />)
+
+    fireEvent.click(screen.getByRole('button', { name: en.manageFreeLLMAPI }))
+    await waitFor(() => { expect(openDashboard).toHaveBeenCalledOnce() })
+    Reflect.deleteProperty(window, 'dshDesktop')
   })
 
   it('applies customized deepseek fields as path ops', async () => {
