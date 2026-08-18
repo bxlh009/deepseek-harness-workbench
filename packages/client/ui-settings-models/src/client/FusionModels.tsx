@@ -56,6 +56,7 @@ export function FusionModels({ groups, namespace, writable, api, controller, t }
   const configuredGlobalVision = globalVisionOf(namespace?.value)
   const configuredGlobalVisionKey = configuredGlobalVision === undefined ? '' : keyOf(configuredGlobalVision)
   const available = groups.filter(group => group.id !== 'fusion')
+  const visionCapable = available.flatMap(group => group.models.filter(model => model.inputModalities?.includes('image')))
   const first = available.flatMap(group => group.models.map(model => ({ provider: group.id, model: model.id })))[0]
   const [editing, setEditing] = useState<number | 'new' | undefined>(undefined)
   const [id, setId] = useState('')
@@ -71,6 +72,16 @@ export function FusionModels({ groups, namespace, writable, api, controller, t }
   const [globalBusy, setGlobalBusy] = useState(false)
   const [globalFailure, setGlobalFailure] = useState<string | undefined>(undefined)
   const [globalSaved, setGlobalSaved] = useState(false)
+
+  const visionOptions = available.flatMap(group => group.models.map((model) => {
+    const route = keyOf({ provider: group.id, model: model.id })
+    const supportsImages = model.inputModalities?.includes('image') === true
+    return (
+      <option key={route} value={route} disabled={!supportsImages}>
+        {group.name} / {model.name}{supportsImages ? '' : ` — ${t('visionCapabilityMissing')}`}
+      </option>
+    )
+  }))
 
   useEffect(() => {
     setGlobalVision(configuredGlobalVisionKey)
@@ -177,7 +188,7 @@ export function FusionModels({ groups, namespace, writable, api, controller, t }
           <div><h3 id="global-vision-title" className={styles['fusionTitle']}>{t('globalVisionTitle')}</h3><p className={styles['intro']}>{t('globalVisionIntro')}</p></div>
         </div>
         <div className={styles['editor']}>
-          <label className={styles['field']}><span className={styles['fieldLabel']}>{t('globalVision')}</span><select className={`${styles['input']} ${styles['selectInput']}`} value={globalVision} disabled={!writable || globalBusy} onChange={(event) => { setGlobalVision(event.target.value); setGlobalConsent(false); setGlobalSaved(false) }}><option value="">{t('globalVisionOff')}</option>{available.flatMap(group => group.models.filter(model => model.inputModalities?.includes('image')).map(model => <option key={keyOf({ provider: group.id, model: model.id })} value={keyOf({ provider: group.id, model: model.id })}>{group.name} / {model.name}</option>))}</select></label>
+          <label className={styles['field']}><span className={styles['fieldLabel']}>{t('globalVision')}</span><select className={`${styles['input']} ${styles['selectInput']}`} value={globalVision} disabled={!writable || globalBusy} onChange={(event) => { setGlobalVision(event.target.value); setGlobalConsent(false); setGlobalSaved(false) }}><option value="">{t('globalVisionOff')}</option>{visionOptions}</select>{visionCapable.length === 0 ? <span className={styles['modelFieldHint']}>{t('globalVisionEmpty')}</span> : null}</label>
           {globalVision.length === 0 ? null : <label className={styles['candidateLabel']}><input type="checkbox" checked={globalConsent} disabled={!writable || globalBusy} onChange={(event) => { setGlobalConsent(event.target.checked); setGlobalSaved(false) }} /><span>{t('globalVisionConsent')}</span></label>}
           {globalFailure === undefined ? null : <p className={styles['error']}>{globalFailure}</p>}
           {globalSaved ? <p className={styles['notice']} role="status">{t('globalVisionSaved')}</p> : null}
@@ -232,7 +243,7 @@ export function FusionModels({ groups, namespace, writable, api, controller, t }
               ))}
             </fieldset>
             <label className={styles['field']}><span className={styles['fieldLabel']}>{t('fusionSynth')}</span><select className={`${styles['input']} ${styles['selectInput']}`} value={synthesizer} disabled={busy} onChange={(event) => { setSynthesizer(event.target.value) }}>{available.flatMap(group => group.models.map(model => <option key={keyOf({ provider: group.id, model: model.id })} value={keyOf({ provider: group.id, model: model.id })}>{group.name} / {model.name}</option>))}</select></label>
-            <label className={styles['field']}><span className={styles['fieldLabel']}>{t('fusionVision')}</span><select className={`${styles['input']} ${styles['selectInput']}`} value={vision} disabled={busy} onChange={(event) => { setVision(event.target.value); if (event.target.value.length === 0) setShareImages(false) }}><option value="">{t('fusionVisionOff')}</option>{available.flatMap(group => group.models.filter(model => model.inputModalities?.includes('image')).map(model => <option key={keyOf({ provider: group.id, model: model.id })} value={keyOf({ provider: group.id, model: model.id })}>{group.name} / {model.name}</option>))}</select><span className={styles['modelFieldHint']}>{t('fusionVisionHint')}</span></label>
+            <label className={styles['field']}><span className={styles['fieldLabel']}>{t('fusionVision')}</span><select className={`${styles['input']} ${styles['selectInput']}`} value={vision} disabled={busy} onChange={(event) => { setVision(event.target.value); if (event.target.value.length === 0) setShareImages(false) }}><option value="">{t('fusionVisionOff')}</option>{visionOptions}</select><span className={styles['modelFieldHint']}>{t('fusionVisionHint')}</span></label>
             {vision.length === 0 ? null : <label className={styles['candidateLabel']}><input type="checkbox" checked={shareImages} disabled={busy} onChange={(event) => { setShareImages(event.target.checked) }} /><span>{t('fusionVisionConsent')}</span></label>}
             {failure === undefined ? null : <p className={styles['error']}>{failure}</p>}
             <div className={styles['editorFooter']}><button type="button" className={styles['secondaryButton']} disabled={busy} onClick={() => { setEditing(undefined) }}>{t('cancel')}</button><button type="button" className={styles['primaryButton']} disabled={busy} onClick={save}>{busy ? t('applying') : t('apply')}</button></div>

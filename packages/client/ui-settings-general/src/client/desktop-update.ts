@@ -1,9 +1,9 @@
 export type DesktopUpdateStatus =
   | { status: 'idle'; currentVersion: string }
   | { status: 'development'; currentVersion: string }
-  | { status: 'up-to-date'; currentVersion: string }
-  | { status: 'available'; currentVersion: string; version: string; unread: boolean }
-  | { status: 'error'; currentVersion: string; message: string }
+  | { status: 'up-to-date'; currentVersion: string; latestVersion?: string; checkedAt?: string }
+  | { status: 'available'; currentVersion: string; version: string; unread: boolean; checkedAt?: string }
+  | { status: 'error'; currentVersion: string; message: string; checkedAt?: string }
 
 export interface DesktopUpdateBridge {
   packaged: boolean

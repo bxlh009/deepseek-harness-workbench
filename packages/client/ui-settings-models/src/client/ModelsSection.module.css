@@ -490,9 +490,25 @@
 
 .modelRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 6px;
+}
+
+.modelVisionToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.modelVisionToggle:has(input:disabled) {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* Square, label-free affordances: the row's own inputs carry the meaning, so
@@ -544,17 +560,6 @@
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
-}
-
-.modelVisionField {
-  grid-column: 1 / -1;
-}
-
-.modelVisionControl {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
 }
 
 .modelFieldHint {

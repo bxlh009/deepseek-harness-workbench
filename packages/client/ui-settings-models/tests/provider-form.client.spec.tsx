@@ -224,7 +224,7 @@ describe('model list editing', () => {
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'vision-model' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 2`), { target: { value: 'text-model' } })
-    expandModel(1)
+    expect(screen.getByLabelText(`${en.modelVisionInput} 1`)).toBeTruthy()
     fireEvent.click(screen.getByLabelText(`${en.modelVisionInput} 1`))
     fireEvent.click(screen.getByText(en.apply))
 
@@ -498,7 +498,7 @@ describe('endpoint interrogation', () => {
     fireEvent.click(screen.getByText(en.fetchModels))
     await screen.findByText(en.fetchTitle)
     // The already-configured row starts unchecked; the new one starts checked.
-    const boxes = [...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
+    const boxes = [...screen.getByRole('dialog').querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
     expect(boxes.map(box => box.checked)).toEqual([false, true])
     fireEvent.click(screen.getByText(en.fetchAdopt))
 
@@ -614,7 +614,7 @@ describe('endpoint interrogation', () => {
 
     fireEvent.click(screen.getByText(en.fetchModels))
     await screen.findByText(en.fetchTitle)
-    const boxes = [...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
+    const boxes = [...screen.getByRole('dialog').querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
     const first = boxes[0] as HTMLInputElement
     fireEvent.click(first)
     fireEvent.click(first)

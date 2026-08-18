@@ -3,6 +3,7 @@ import { updateCopy } from './update-copy.mjs'
 
 const INITIAL_UPDATE_CHECK_DELAY_MS = 15_000
 const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
+const MANUAL_RETRY_DELAYS_MS = [1_500, 4_000]
 
 function messageBox(dialog, getWindow, options) {
   const window = getWindow()
@@ -20,7 +21,16 @@ function errorMessage(error) {
  * Register the packaged-app update bridge and lifecycle prompts.
  * Releases are read from the independent GitHub repository declared in package.json.
  */
-export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow, updater = updaterPackage.autoUpdater }) {
+export function registerDesktopUpdater({
+  app,
+  dialog,
+  ipcMain,
+  getWindow,
+  updater = updaterPackage.autoUpdater,
+  now = () => new Date().toISOString(),
+  sleep = delay => new Promise(resolve => setTimeout(resolve, delay)),
+  manualRetryDelays = MANUAL_RETRY_DELAYS_MS,
+}) {
   // Updates are discovered automatically, but downloading remains a person's
   // choice. A background check must never silently replace their application.
   updater.autoDownload = false
@@ -40,19 +50,24 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow, update
     return status
   }
 
-  const publishAvailable = (version) => {
+  const publishAvailable = (version, checkedAt = now()) => {
     const unread = updateStatus.status === 'available' && updateStatus.version === version
       ? updateStatus.unread
       : true
-    return publishStatus({ status: 'available', currentVersion, version, unread })
+    return publishStatus({ status: 'available', currentVersion, version, unread, checkedAt })
   }
 
   // Discovery is deliberately quiet. The renderer owns the persistent badge
   // and Settings surface; a native dialog appears only after a chosen download.
   updater.on('update-available', (info) => { publishAvailable(info.version) })
 
-  updater.on('update-not-available', () => {
-    publishStatus({ status: 'up-to-date', currentVersion })
+  updater.on('update-not-available', (info) => {
+    publishStatus({
+      status: 'up-to-date',
+      currentVersion,
+      latestVersion: info?.version ?? currentVersion,
+      checkedAt: now(),
+    })
   })
 
   updater.on('update-downloaded', (info) => {
@@ -72,7 +87,7 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow, update
   updater.on('error', (error) => {
     console.error('[desktop-updater]', error)
     if (updateStatus.status !== 'available') {
-      publishStatus({ status: 'error', currentVersion, message: errorMessage(error) })
+      publishStatus({ status: 'error', currentVersion, message: errorMessage(error), checkedAt: now() })
     }
   })
 
@@ -91,23 +106,43 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow, update
       return updateStatus
     } catch (error) {
       console.error('[desktop-updater] download failed', error)
-      return publishStatus({ status: 'error', currentVersion, message: errorMessage(error) })
+      return publishStatus({ status: 'error', currentVersion, message: errorMessage(error), checkedAt: now() })
     }
   })
 
-  ipcMain.handle('dsh:updates:check', async () => {
+  const checkForUpdates = async (retryDelays = []) => {
     if (!app.isPackaged) return { status: 'development', currentVersion }
 
     try {
-      const result = await updater.checkForUpdates()
-      const version = result?.updateInfo.version
-      if (version === undefined || version === currentVersion) {
-        return publishStatus({ status: 'up-to-date', currentVersion })
+      let latestVersion = currentVersion
+      for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+        const result = await updater.checkForUpdates()
+        const version = result?.updateInfo.version
+        if (version !== undefined) latestVersion = version
+        if (version !== undefined && version !== currentVersion) {
+          return publishAvailable(version)
+        }
+        const delay = retryDelays[attempt]
+        if (delay !== undefined) await sleep(delay)
       }
-      return publishAvailable(version)
+      return publishStatus({ status: 'up-to-date', currentVersion, latestVersion, checkedAt: now() })
     } catch (error) {
       if (updateStatus.status === 'available') return updateStatus
-      return publishStatus({ status: 'error', currentVersion, message: errorMessage(error) })
+      return publishStatus({ status: 'error', currentVersion, message: errorMessage(error), checkedAt: now() })
+    }
+  }
+
+  ipcMain.handle('dsh:updates:check', async () => {
+    const previousHeaders = updater.requestHeaders
+    updater.requestHeaders = {
+      ...(previousHeaders ?? {}),
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    }
+    try {
+      return await checkForUpdates(manualRetryDelays)
+    } finally {
+      updater.requestHeaders = previousHeaders
     }
   })
 
@@ -117,7 +152,7 @@ export function registerDesktopUpdater({ app, dialog, ipcMain, getWindow, update
     void updater.checkForUpdates().catch((error) => {
       console.error('[desktop-updater] scheduled check failed', error)
       if (updateStatus.status !== 'available') {
-        publishStatus({ status: 'error', currentVersion, message: errorMessage(error) })
+        publishStatus({ status: 'error', currentVersion, message: errorMessage(error), checkedAt: now() })
       }
     })
   }

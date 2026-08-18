@@ -7,6 +7,26 @@ import { en } from '../src/client/locales.ts'
 afterEach(cleanup)
 
 describe('FusionModels vision consent', () => {
+  it('shows why configured models cannot be selected as vision routes', () => {
+    render(<FusionModels
+      groups={[
+        { id: 'agnes', name: 'Agnes', models: [{ id: 'agnes-2.5-flash', name: 'Agnes 2.5 Flash', inputModalities: ['text'] }] },
+        { id: 'longcat', name: 'LongCat', models: [{ id: 'LongCat-2.0', name: 'LongCat 2.0' }] },
+      ] as never}
+      namespace={{ ns: 'llm-fusion', value: { models: [] }, revision: 7 } as never}
+      writable
+      api={{ settings: { mutate: vi.fn() }, llm: { arena: vi.fn() } } as never}
+      controller={{ load: vi.fn(() => Promise.resolve()) } as never}
+      t={key => en[key]}
+    />)
+
+    const agnes = screen.getByRole('option', { name: /Agnes \/ Agnes 2.5 Flash.*not marked for image input/ }) as HTMLOptionElement
+    const longcat = screen.getByRole('option', { name: /LongCat \/ LongCat 2.0.*not marked for image input/ }) as HTMLOptionElement
+    expect(agnes.disabled).toBe(true)
+    expect(longcat.disabled).toBe(true)
+    expect(screen.getByText(/Edit a provider below and enable Supports image input/)).toBeTruthy()
+  })
+
   it('reflects a global vision route that arrives after settings load', async () => {
     const props = {
       groups: [

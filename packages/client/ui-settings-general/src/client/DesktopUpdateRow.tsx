@@ -8,9 +8,14 @@ function resultText(t: TranslateNS<'settings'>, result: DesktopUpdateStatus | un
   if (result === undefined) return t('update.source')
   if (result.status === 'idle') return t('update.source')
   if (result.status === 'development') return t('update.development', { version: result.currentVersion })
-  if (result.status === 'up-to-date') return t('update.current', { version: result.currentVersion })
-  if (result.status === 'available') return t('update.available', { version: result.version })
+  if (result.status === 'up-to-date') return t('update.current')
+  if (result.status === 'available') return t('update.available')
   return t('update.failed', { message: result.message })
+}
+
+function checkedAtText(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
 /** Desktop update row copy follows the settings locale seat. */
@@ -42,6 +47,12 @@ export function DesktopUpdateRow({ t }: { t: TranslateNS<'settings'> }) {
     void bridge.acknowledgeUpdate?.().then(setResult).catch(() => {})
   }
   const available = result?.status === 'available'
+  const latestVersion = result?.status === 'available'
+    ? result.version
+    : result?.status === 'up-to-date' ? result.latestVersion ?? result.currentVersion : undefined
+  const checkedAt = result?.status === 'available' || result?.status === 'up-to-date' || result?.status === 'error'
+    ? result.checkedAt
+    : undefined
 
   return (
     <div className={css.row}>
@@ -55,7 +66,16 @@ export function DesktopUpdateRow({ t }: { t: TranslateNS<'settings'> }) {
           {t('update.title')}
           {unread && <span className={css.updateDot} aria-hidden="true" />}
         </div>
-        <div className={css.description} role="status">{resultText(t, result)}</div>
+        <div className={css.description} role="status">
+          <span>{resultText(t, result)}</span>
+          {result === undefined ? null : (
+            <span className={css.versionFacts}>
+              <span>{t('update.currentVersion')} {result.currentVersion}</span>
+              {latestVersion === undefined ? null : <span>{t('update.latestVersion')} {latestVersion}</span>}
+              {checkedAt === undefined ? null : <span>{t('update.lastChecked')} {checkedAtText(checkedAt)}</span>}
+            </span>
+          )}
+        </div>
       </button>
       <button
         type="button"
