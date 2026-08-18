@@ -13,12 +13,29 @@
   flex-direction: column;
   gap: 4px;
   padding-right: 32px;
+  padding-left: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 14px;
   line-height: 22px;
   color: var(--dsw-alias-label-primary);
+}
+
+.updateDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-error-primary);
+  box-shadow: 0 0 0 2px var(--dsw-alias-bg-layer-2);
 }
 
 .description {

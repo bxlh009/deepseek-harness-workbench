@@ -73,6 +73,33 @@ describe('DesktopUpdateRow', () => {
     expect(screen.getByText('Check for updates')).toBeTruthy()
     expect(screen.getByText('Get desktop updates from the independent GitHub Releases channel.')).toBeTruthy()
   })
+
+  it('shows an unread dot and clears it only when the software update row is opened', async () => {
+    const acknowledgeUpdate = vi.fn().mockResolvedValue({
+      status: 'available' as const,
+      currentVersion: '0.1.0-rc.9',
+      version: '0.1.0-rc.10',
+      unread: false,
+    })
+    window.dshDesktop = {
+      packaged: true,
+      checkForUpdates: vi.fn(),
+      getUpdateStatus: vi.fn().mockResolvedValue({
+        status: 'available' as const,
+        currentVersion: '0.1.0-rc.9',
+        version: '0.1.0-rc.10',
+        unread: true,
+      }),
+      acknowledgeUpdate,
+    }
+
+    render(<DesktopUpdateRow t={t} />)
+    const row = await screen.findByRole('button', { name: /Software update/ })
+    expect(row.getAttribute('data-update-unread')).toBe('true')
+    fireEvent.click(row)
+    await waitFor(() => { expect(acknowledgeUpdate).toHaveBeenCalledOnce() })
+    expect(row.hasAttribute('data-update-unread')).toBe(false)
+  })
 })
 
 describe('SettingsDocumentAction', () => {

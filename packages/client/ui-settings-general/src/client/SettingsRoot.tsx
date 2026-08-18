@@ -18,6 +18,8 @@ import {
   IconPersonalizationOutline16, IconSettingsOutline16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SettingsRootComponentProps, SettingsSectionRow } from './shell-contract.ts'
+import './desktop-update.ts'
+import type { DesktopUpdateStatus } from './desktop-update.ts'
 import css from './SettingsRoot.module.css'
 
 /** Nav glyph by section id; unknown ids fall back to the settings gear. */
@@ -107,6 +109,7 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
   const [open, setOpen] = useState(false)
   const [activeId, setActiveId] = useState<string | undefined>(undefined)
   const [completedOnboarding, setCompletedOnboarding] = useState<ReadonlySet<string>>(() => new Set())
+  const [updateUnread, setUpdateUnread] = useState(false)
   const close = useCallback(() => {
     setOpen(false)
     setActiveId(undefined)
@@ -117,6 +120,24 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
   }, [])
 
   useEffect(() => attachNavigation(openSection), [attachNavigation, openSection])
+
+  useEffect(() => {
+    const bridge = window.dshDesktop
+    if (bridge?.packaged !== true) return
+    let mounted = true
+    let eventObserved = false
+    const accept = (status: DesktopUpdateStatus) => {
+      if (mounted) setUpdateUnread(status.status === 'available' && status.unread)
+    }
+    const unsubscribe = bridge.onUpdateStatus?.((status) => {
+      eventObserved = true
+      accept(status)
+    })
+    void bridge.getUpdateStatus?.().then((status) => {
+      if (!eventObserved) accept(status)
+    }).catch(() => {})
+    return () => { mounted = false; unsubscribe?.() }
+  }, [])
 
   // The ledger tick keeps the nav rows fresh: registrants re-register with
   // freshly localized text on locale change, and the trigger/header/close
@@ -147,11 +168,13 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
       <button
         type="button"
         className={clsx(css.trigger, !wide && css.rail)}
+        data-update-unread={updateUnread || undefined}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => { setOpen(true) }}
       >
         {renderSlot('settings.trigger', { wide })}
+        {updateUnread && <span className={css.updateDot} aria-hidden="true" />}
       </button>
       {open && createPortal(
         <SettingsPanel
