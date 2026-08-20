@@ -356,6 +356,15 @@ describe('WebSearchCard', () => {
     expect(screen.getByLabelText(en.webSearchApiKey)).toHaveProperty('type', 'password')
   })
 
+  it('explains that keyless AnySearch still supports anonymous access', () => {
+    renderWebSearch()
+    fireEvent.click(screen.getByText(en.webSearchTitle))
+
+    expect(screen.getByText(en.webSearchApiKeyUnset)).toBeTruthy()
+    expect(en.webSearchApiKeyUnset).toContain('anonymous')
+    expect(en.webSearchApiKeyUnset).toContain('lower quotas')
+  })
+
   it('keeps the key control usable while the settings document is read-only', () => {
     const actions = renderWebSearch({ writable: false })
     fireEvent.click(screen.getByText(en.webSearchTitle))

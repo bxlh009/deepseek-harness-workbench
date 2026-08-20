@@ -10,7 +10,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -78,7 +78,13 @@ describe.skipIf(!hasPwsh)('pwsh tool over the real pwsh executor', () => {
     const result = await call('pwsh', { command: 'Write-Output hi', description: 'say hi' }, agent())
     expect(result.isError).toBe(false)
     if (result.isError) throw new Error('expected pwsh success')
-    expect(result.value).toMatchObject({ kind: 'foreground', exitCode: 0 })
+    expect(result.value).toMatchObject({
+      kind: 'foreground',
+      exitCode: 0,
+      stdout: { truncated: false },
+      stderr: { text: '', truncated: false },
+    })
+    expect(lf((result.value as { stdout: { text: string } }).stdout.text)).toBe('hi\n')
     expect(lf(text(result))).toBe('hi\n')
   })
 
@@ -98,6 +104,17 @@ describe.skipIf(!hasPwsh)('pwsh tool over the real pwsh executor', () => {
     }, agent())
     expect(result.isError).toBe(false)
     expect(lf(text(result))).toBe('hello pwsh\n')
+  })
+
+  it('writes relative redirect and Out-File targets in the session workspace', async () => {
+    const result = await call('pwsh', {
+      command: 'Write-Output redirected > redirected.txt; Out-File -FilePath out-file.txt -InputObject out-file; Get-Content redirected.txt; Get-Content out-file.txt',
+      description: 'write relative output files',
+    }, agent())
+    expect(result.isError).toBe(false)
+    expect(lf(text(result))).toBe('redirected\nout-file\n')
+    expect(await readFile(join(dir, 'redirected.txt'), 'utf8')).toContain('redirected')
+    expect(await readFile(join(dir, 'out-file.txt'), 'utf8')).toContain('out-file')
   })
 
   it('a per-call timeout kills the run and reports the timed-out marker, not an error', async () => {

@@ -51,7 +51,7 @@ export interface SpawnInternals {
   /** Directory for spill files (defaults to the OS temp dir). */
   spillDir?: string
   /** Windows tree-termination runner (defaults to `taskkill /PID <pid> /T /F`). */
-  taskkill?: (pid: number) => void
+  taskkill?: (pid: number) => boolean | void
   /** Host platform override for signalling decisions. */
   platform?: NodeJS.Platform
   /** Linux process-group member probe (defaults to `/proc` inspection). */
@@ -272,13 +272,22 @@ export function killGroup(pid: number, sig: NodeJS.Signals): void {
  * nonzero status, or a missing taskkill binary must not break idempotent
  * teardown.
  * @param pid - root process id; non-positive is a no-op.
+ * @returns `true` when taskkill reports success; `false` when the tree-level
+ * operation was unavailable or rejected, so the caller can use a direct-child
+ * fallback.
  */
-export function taskkillProcessTree(pid: number): void {
-  if (pid <= 0) return
-  // Outcome deliberately unchecked: an already-absent tree (status 128), exit
-  // races, and a missing taskkill binary (spawnSync reports, never throws) are
-  // as tolerable here as ESRCH is for a POSIX group signal.
-  spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' })
+export function taskkillProcessTree(pid: number): boolean {
+  if (pid <= 0) return false
+  // An already-absent tree, exit races, and a missing taskkill binary are as
+  // tolerable here as ESRCH is for a POSIX group signal. The boolean is
+  // retained so callers can fall back to direct-child termination when a
+  // restricted host rejects taskkill.
+  try {
+    const result = spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' })
+    return result.status === 0
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -292,14 +301,30 @@ function signalTree(
   pid: number,
   sig: NodeJS.Signals,
   child: ChildProcess,
-  taskkill: (pid: number) => void,
-): void {
+  taskkill: (pid: number) => boolean | void,
+): boolean {
   if (platform === 'win32') {
-    taskkill(pid)
-    return
+    try {
+      const treeTerminated = taskkill(pid)
+      if (treeTerminated !== false) return false
+    } catch {
+      // A restricted host may reject the tree-level primitive. The direct
+      // child fallback below still gives foreground callers a settled result.
+    }
+    // `taskkill /T /F` is the preferred tree primitive, but some Windows
+    // hosts deny it even for a process created by this runtime. Node's child
+    // handle remains usable in that case; on Windows child.kill maps to the
+    // native force-termination API. This cannot promise descendant cleanup,
+    // so tree liveness still uses the direct child boundary on win32.
+    try {
+      child.kill(sig)
+    } catch {
+      // The child already exited; teardown remains idempotent.
+    }
+    return true
   }
   /* v8 ignore next -- kill/terminate gate on treeAlive(), which is false for pid -1; this guard protects direct callers only. */
-  if (pid <= 0) return
+  if (pid <= 0) return false
   try {
     process.kill(-pid, sig)
   } catch {
@@ -312,6 +337,7 @@ function signalTree(
     }
     /* v8 ignore stop */
   }
+  return false
 }
 
 /**
@@ -373,6 +399,7 @@ export function spawnSubprocess(spec: SubprocessSpawnSpec, internals: SpawnInter
   let treeExitObserved = false
   let treeExitObservation: Promise<void> | undefined
   let settled = false
+  let windowsFallbackTermination = false
 
   // Failed spawns use pid -1 so signalling remains a no-op.
   const pid = child.pid ?? -1
@@ -433,7 +460,7 @@ export function spawnSubprocess(spec: SubprocessSpawnSpec, internals: SpawnInter
     /* v8 ignore next -- the shared exit observer cancels the ordinary dead-tree timer;
        this remains the timer/death race guard and cannot be staged deterministically. */
     if (!treeAlive()) return
-    signalTree(platform, pid, sig, child, taskkill)
+    windowsFallbackTermination ||= signalTree(platform, pid, sig, child, taskkill)
   }
 
   const terminate = (): void => {
@@ -479,7 +506,13 @@ export function spawnSubprocess(spec: SubprocessSpawnSpec, internals: SpawnInter
       stdoutCollector?.seal()
       stderrCollector?.seal()
       cleanup()
-      resolve({ exitCode, signal })
+      // A restricted Windows host may deny taskkill while Node's direct-child
+      // fallback still succeeds. Node reports that fallback as a signal, but
+      // the public Windows contract exposes force termination as exit code 1
+      // with no signal (the same shape as a successful taskkill).
+      resolve(windowsFallbackTermination && platform === 'win32' && signal !== null
+        ? { exitCode: exitCode ?? 1, signal: null }
+        : { exitCode, signal })
     }
     child.on('error', (error) => {
       // No meaningful close outcome follows a spawn failure.

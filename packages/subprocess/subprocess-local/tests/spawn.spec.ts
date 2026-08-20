@@ -622,6 +622,25 @@ describe('windows tree semantics (injected platform)', () => {
     expect(outcome.signal).toBe('SIGKILL')
   })
 
+  it('falls back to the direct child when Windows tree termination fails', { timeout: 2_000 }, async () => {
+    const running = spawnSubprocess({
+      ...spec('unused', { graceMs: 100 }),
+      argv: [process.execPath, '-e', 'setInterval(() => {}, 60_000)'],
+    }, {
+      spillDir,
+      platform: 'win32',
+      // The managed Windows taskkill path can be denied by a restricted host.
+      // The subprocess seam must still settle the direct child instead of
+      // leaving foreground callers waiting forever.
+      taskkill: () => false,
+    })
+    const started = Date.now()
+    running.terminate()
+    const outcome = await running.done
+    expect(Date.now() - started).toBeLessThan(1_000)
+    expect(outcome.signal !== null || outcome.exitCode !== 0).toBe(true)
+  })
+
   it('waitForExit falls back to direct-child liveness where groups do not exist', async () => {
     const running = spawnSubprocess(spec('true'), { spillDir, platform: 'win32', taskkill: () => {} })
     await running.done
