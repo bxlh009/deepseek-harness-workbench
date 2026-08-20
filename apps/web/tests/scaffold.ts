@@ -478,13 +478,20 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
       : [],
     ...options.deepSeekSearch === undefined
       ? []
-      : [{
-        id: 'web-search-deepseek',
-        config: {
-          apiKeyEnv: options.deepSeekSearch.apiKeyEnv,
-          baseURL: options.deepSeekSearch.baseURL,
+      : [
+        // The production base bundle defaults to AnySearch. These scenarios
+        // deliberately exercise the DeepSeek provider, so pin the provider
+        // choice and remove the production default for the fixture only.
+        { id: 'web', config: { searchProvider: 'deepseek-official' } },
+        { id: 'web-search-anysearch', disabled: true },
+        {
+          id: 'web-search-deepseek',
+          config: {
+            apiKeyEnv: options.deepSeekSearch.apiKeyEnv,
+            baseURL: options.deepSeekSearch.baseURL,
+          },
         },
-      }],
+      ],
     ...mode === 'record' || options.deepSeekMissingCredential === true
       ? []
       : [{ id: 'llm-deepseek', disabled: true }],

@@ -62,16 +62,16 @@ export function WebSearchCard(props: WebSearchCardProps) {
       />
       <ValueField
         id="plugin-config-web-search-max-uses"
-        label={t('webSearchMaxUses')}
-        hint={t('webSearchMaxUsesHint')}
+        label={t('webSearchMaxResults')}
+        hint={t('webSearchMaxResultsHint')}
         overriddenLabel={t('overridden')}
         resetLabel={t('reset')}
         invalidLabel={t('invalidNumber')}
         numeric
         disabled={disabled}
-        {...state.maxUses}
-        onEdit={(text) => { props.edit('maxUses', text) }}
-        onReset={() => { props.resetField('maxUses') }}
+        {...state.maxResults}
+        onEdit={(text) => { props.edit('maxResults', text) }}
+        onReset={() => { props.resetField('maxResults') }}
       />
     </PluginCard>
   )

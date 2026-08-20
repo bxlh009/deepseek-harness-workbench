@@ -24,6 +24,7 @@ async function bench() {
   const rename = vi.fn(async () => ({}))
   const insertSessionBefore = vi.fn(async () => ({}))
   const open = vi.fn()
+  const showCoding = vi.fn()
   const clear = vi.fn()
   const search = vi.fn(async () => ({
     ok: true as const,
@@ -35,12 +36,13 @@ async function bench() {
   ctx.provide('workspaces', {
     create, startSession, rename, insertSessionBefore,
   } as never)
+  ctx.provide('layout', { showCoding } as never)
   ctx.provide('sessions', { open, clear, search, searchResultLimit: 20, binding, fork } as never)
   const locale = new LocaleRuntime(ctx)
   ctx.provide('locale', locale)
   return {
     ctx, slots: ctx.get('slots') as SlotRegistry, locale, create, startSession, rename,
-    insertSessionBefore, open, clear, search, renameSession, binding, fork,
+    insertSessionBefore, open, showCoding, clear, search, renameSession, binding, fork,
   }
 }
 
@@ -54,7 +56,7 @@ function declare(slots: SlotRegistry, ...names: HoleName[]): () => void {
 
 describe('ui-workspace apply', () => {
   it('declares the services it drives', () => {
-    expect(inject).toEqual(['slots', 'sessions', 'workspaces', 'locale'])
+    expect(inject).toEqual(['slots', 'layout', 'sessions', 'workspaces', 'locale'])
   })
 
   it('registers browser and pickers for declarations arriving before or after apply', async () => {
@@ -87,6 +89,7 @@ describe('ui-workspace apply', () => {
     browser.startSession()
     expect(b.startSession).toHaveBeenLastCalledWith(undefined)
     browser.open('session' as never)
+    expect(b.showCoding).toHaveBeenCalledOnce()
     expect(b.open).toHaveBeenCalledWith('session')
     const signal = new AbortController().signal
     await expect(browser.searchSessions('match', signal)).resolves.toEqual({
