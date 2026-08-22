@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-desktop",
   "description": "Global, local-first, multi-provider coding agent desktop workbench built on DeepSeek Harness",
-  "version": "0.1.0-rc.13",
+  "version": "0.1.0-rc.16",
   "private": true,
   "type": "module",
   "main": "src/main.mjs",
