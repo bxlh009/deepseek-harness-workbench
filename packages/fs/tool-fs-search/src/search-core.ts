@@ -19,6 +19,7 @@
  * @module @deepseek-ai/dsh-tool-fs-search/search-core
  */
 
+import { existsSync } from 'node:fs'
 import { isAbsolute, relative, sep } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { HarnessError } from '@deepseek-ai/dsh-llm'
@@ -156,6 +157,23 @@ function completeStdout(toolName: string, stdout: SubprocessOutputRead, rawOutpu
 let rgPathPromise: Promise<string> | undefined
 
 /**
+ * Map a resolved ripgrep path that lives inside an asar archive onto its
+ * on-disk unpacked twin. Packaged desktop runtimes spawn search children
+ * through the subprocess seam without Electron's asar extraction, and a
+ * plain child cannot read the asar virtual tree; the desktop layout mirrors
+ * every unpacked file under `<archive>.unpacked`.
+ * @param resolved - absolute rg path as produced by `@vscode/ripgrep`.
+ * @returns the on-disk unpacked path when it exists, else `undefined` to
+ *   keep the caller's original resolution.
+ */
+export function desktopUnpackedRgPath(resolved: string): string | undefined {
+  const archived = /^(?<archive>.+\.asar)(?<separator>[\\/])(?<rest>.+)$/.exec(resolved)
+  if (archived?.groups === undefined) return undefined
+  const candidate = `${archived.groups.archive}.unpacked${archived.groups.separator}${archived.groups.rest}`
+  return existsSync(candidate) ? candidate : undefined
+}
+
+/**
  * The packaged ripgrep binary path, resolved lazily once per process.
  *
  * `@vscode/ripgrep` resolves its platform package (`@vscode/ripgrep-<platform>
@@ -163,13 +181,15 @@ let rgPathPromise: Promise<string> | undefined
  * corrupt platform package (`pnpm install --omit=optional`, partial install)
  * into a failure of the whole Loader composition. Resolving at the call
  * boundary keeps that failure at the first search call as `SEARCH_FAILED` —
- * the package's documented no-load-time-probe contract.
+ * the package's documented no-load-time-probe contract. Inside packaged
+ * desktop runtimes the resolved path is remapped onto its on-disk unpacked
+ * twin, which plain search children can actually execute.
  *
  * @returns the packaged binary's absolute path; the memoized promise rejects
  *   when the platform package cannot be resolved.
  */
 export function resolveRgPath(): Promise<string> {
-  rgPathPromise ??= import('@vscode/ripgrep').then(module => module.rgPath)
+  rgPathPromise ??= import('@vscode/ripgrep').then(module => module.rgPath).then(resolved => desktopUnpackedRgPath(resolved) ?? resolved)
   return rgPathPromise
 }
 
