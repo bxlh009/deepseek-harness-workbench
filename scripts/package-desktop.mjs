@@ -187,10 +187,9 @@ async function archiveRuntime() {
     unpack: '*.{node,exe,dll}',
       // The Windows ACL runner executes as a plain Node child spawned by the
       // desktop runtime: it cannot read the asar virtual tree. @electron/asar
-      // 3.4.1 accepts one unpackDir glob (not an array), so keep the complete
-      // node_modules tree beside node.exe; the desktop package already copies
-      // this directory as an extra resource.
-      unpackDir: 'node_modules',
+      // 3.4.1 accepts one unpackDir glob (not an array); use a brace glob for
+      // the Windows ACL runner's complete native dependency closure.
+      unpackDir: 'node_modules/{koffi,@koromix,@vscode/ripgrep-win32-x64,@deepseek-ai/dsh-sandbox-windows-acl}',
   })
 }
 
