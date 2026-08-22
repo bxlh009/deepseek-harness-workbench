@@ -185,16 +185,12 @@ async function archiveRuntime() {
     // @electron/asar matches this pattern against absolute Windows paths with
     // matchBase enabled. A slash-containing glob misses nested native modules.
     unpack: '*.{node,exe,dll}',
-    // The windows-acl runner executes as a plain Node child spawned by the
-    // desktop runtime: it cannot read the asar virtual tree, so its whole
-    // dependency closure stays on disk beside node.exe as complete packages
-    // (metadata included — a stripped platform package cannot be required).
-    unpackDir: [
-      'node_modules/koffi',
-      'node_modules/@koromix',
-      'node_modules/@vscode/ripgrep-win32-x64',
-      'node_modules/@deepseek-ai/dsh-sandbox-windows-acl',
-    ],
+      // The Windows ACL runner executes as a plain Node child spawned by the
+      // desktop runtime: it cannot read the asar virtual tree. @electron/asar
+      // 3.4.1 accepts one unpackDir glob (not an array), so keep the complete
+      // node_modules tree beside node.exe; the desktop package already copies
+      // this directory as an extra resource.
+      unpackDir: 'node_modules',
   })
 }
 
