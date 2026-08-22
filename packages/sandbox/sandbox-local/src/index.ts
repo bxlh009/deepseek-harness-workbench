@@ -247,6 +247,27 @@ const RUNNER_FAILURE_RULES = {
  * latter revoked on provider dispose); the one-time probes spawn nothing
  * else.
  */
+/**
+ * Map a windows-acl runner entry that resolves inside an asar archive onto
+ * its on-disk unpacked twin plus the desktop's bundled real Node executable.
+ * Packaged desktop runtimes execute inside an Electron process, so
+ * `process.execPath` is not Node and a plain Node child cannot read the asar
+ * virtual tree; the desktop layout mirrors every unpacked file under
+ * `<archive>.unpacked` and places `node.exe` beside that root.
+ * @param builtEntry - absolute runner entry path as resolved in-process.
+ * @returns `[nodeExe, runnerEntry]` when both on-disk files exist, else
+ *   `undefined` so the caller keeps its development/CLI resolution.
+ */
+export function desktopAclRunnerInvocation(builtEntry: string): string[] | undefined {
+  const archived = /^(?<archive>.+\.asar)(?<separator>[\\/])(?<rest>.+)$/.exec(builtEntry)
+  if (archived?.groups === undefined) return undefined
+  const unpackedRoot = `${archived.groups.archive}.unpacked`
+  const runnerEntry = `${unpackedRoot}${archived.groups.separator}${archived.groups.rest}`
+  const nodeExe = join(unpackedRoot, 'node.exe')
+  if (!existsSync(runnerEntry) || !existsSync(nodeExe)) return undefined
+  return [nodeExe, runnerEntry]
+}
+
 export class LocalSandboxProvider extends SandboxProvider {
   // Inline schema call: the config catalog walks `static Config` statically.
   static Config: z<Config> = z.object({
@@ -551,13 +572,20 @@ export class LocalSandboxProvider extends SandboxProvider {
   /**
    * The windows-acl runner argv prefix: the built lib/runner.js entry when
    * present (production), else the package source through tsx (development).
-   * The prefix stays `[node, runner, ...]` — a future native-exe runner keeps
-   * the same argv contract and only swaps these entries.
+   * Inside a packaged desktop runtime the entry resolves into the asar
+   * virtual tree, so both halves of the prefix swap to their on-disk
+   * counterparts (`<archive>.unpacked` mirror plus the bundled node.exe) —
+   * a plain Node child can neither read asar paths nor treat the Electron
+   * binary as its interpreter. The prefix stays `[node, runner, ...]` — a
+   * future native-exe runner keeps the same argv contract and only swaps
+   * these entries.
    */
   private windowsAclRunnerInvocation(): string[] {
     const override = this.internals.windowsAclRunnerArgs
     if (override !== undefined) return override
     const builtEntry = this.internals.windowsAclRunnerEntry ?? fileURLToPath(import.meta.resolve('@deepseek-ai/dsh-sandbox-windows-acl/runner'))
+    const desktop = desktopAclRunnerInvocation(builtEntry)
+    if (desktop !== undefined) return desktop
     if (existsSync(builtEntry)) return [process.execPath, builtEntry]
     const sourceEntry = fileURLToPath(import.meta.resolve('@deepseek-ai/dsh-sandbox-windows-acl/src/runner.ts'))
     return [process.execPath, '--import', 'tsx/esm', sourceEntry]
