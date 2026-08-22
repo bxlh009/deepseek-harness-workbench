@@ -129,6 +129,10 @@ function buildRuntime(packages) {
   run('npm', [
     'install',
     '--include=optional',
+    // The packed workspace intentionally declares its internal graph as peer
+    // dependencies. Every peer is already a direct file dependency above;
+    // npm's strict resolver can misclassify local tarballs as `undefined`.
+    '--legacy-peer-deps',
     '--ignore-scripts',
     '--no-audit',
     '--no-fund',
@@ -136,7 +140,7 @@ function buildRuntime(packages) {
   ], RUNTIME_ROOT, {
     npm_config_cache: process.env.DSH_DESKTOP_NPM_CACHE ?? NPM_CACHE_ROOT,
   })
-  rmSync(NPM_CACHE_ROOT, { recursive: true, force: true })
+  rmSync(NPM_CACHE_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 1000 })
 
   if (process.platform !== 'win32') throw new Error('Windows desktop packaging requires a Windows Node runtime.')
   const nodeSource = process.env.DSH_DESKTOP_NODE_RUNTIME ?? process.execPath
@@ -195,7 +199,7 @@ async function archiveRuntime() {
 }
 
 async function main() {
-  rmSync(OUTPUT_ROOT, { recursive: true, force: true })
+  rmSync(OUTPUT_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 1000 })
   mkdirSync(TARBALL_ROOT, { recursive: true })
 
   const packages = []
