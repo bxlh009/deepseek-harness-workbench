@@ -12,6 +12,18 @@ import { fileURLToPath } from 'node:url'
 import type { Win32DialogWorkerData } from './win32-dialog-worker.ts'
 
 /**
+ * Resolve the plain Node executable used by native child workers. Packaged
+ * desktop Hosts run inside Electron's utility process, so process.execPath is
+ * the Electron executable there rather than the bundled Node runtime.
+ */
+export function resolveDialogNodeCommand(
+  environment: NodeJS.ProcessEnv = process.env,
+  electronExecutable = process.execPath,
+): string {
+  return environment.DSH_NODE_RUNTIME?.trim() || electronExecutable
+}
+
+/**
  * Spawn the dialog child process. Built consumers launch the bundled CJS
  * entry next to this module under plain node; unbuilt (source) consumers
  * bootstrap tsx first, mirroring the dsh CLI's source launch. The dialog is
@@ -25,9 +37,9 @@ export function spawnDialogWorker(data: Win32DialogWorkerData): ReturnType<typeo
   const stdio: StdioOptions = ['ignore', 'inherit', 'inherit', 'ipc']
   /* v8 ignore next 3 -- the built-output arm: tests always run unbuilt (src/) */
   if (!import.meta.url.endsWith('.ts')) {
-    return spawn(process.execPath, [fileURLToPath(new URL('./worker.cjs', import.meta.url))], { env, stdio, windowsHide: true })
+    return spawn(resolveDialogNodeCommand(env), [fileURLToPath(new URL('./worker.cjs', import.meta.url))], { env, stdio, windowsHide: true })
   }
-  return spawn(process.execPath, ['--import', import.meta.resolve('tsx/esm'), fileURLToPath(new URL('./win32-dialog-worker.ts', import.meta.url))], { env, stdio, windowsHide: true })
+  return spawn(resolveDialogNodeCommand(env), ['--import', import.meta.resolve('tsx/esm'), fileURLToPath(new URL('./win32-dialog-worker.ts', import.meta.url))], { env, stdio, windowsHide: true })
 }
 
 export { closeThreadWindows } from './win32-dialog-bindings.ts'

@@ -127,7 +127,13 @@ async function ensureHost() {
   hostSupervisor = new HostSupervisor({
     sourceRoot,
     dshHome,
-    baseEnvironment: { ...process.env, FREELLMAPI_API_KEY: freeLlm.apiKey },
+    baseEnvironment: {
+      ...process.env,
+      FREELLMAPI_API_KEY: freeLlm.apiKey,
+      ...(app.isPackaged
+        ? { DSH_NODE_RUNTIME: resolve(process.resourcesPath, 'runtime.asar.unpacked', 'node.exe') }
+        : {}),
+    },
     ...(app.isPackaged ? {
       nodeCommand: 'electron-utility-process',
       workingDirectory: process.resourcesPath,
